@@ -1,0 +1,1632 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 10.3' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     57178,       1623]
+NotebookOptionsPosition[     54764,       1534]
+NotebookOutlinePosition[     55100,       1549]
+CellTagsIndexPosition[     55057,       1546]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"InputName", "=", "\"\<NoMoS_newConnec\>\""}], ";"}]], "Input",
+ CellChangeTimes->{{3.715408152400725*^9, 3.715408170452013*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+  "SetDirectory", "[", 
+   "\"\</home/dmoser/Dropbox/PhD/Magfield/MagfieldDaniel\>\"", "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Config", "=", 
+  RowBox[{
+   RowBox[{"Cases", "[", 
+    RowBox[{
+     RowBox[{"Import", "[", 
+      RowBox[{
+       RowBox[{"InputName", "<>", "\"\<.config\>\""}], ",", "\"\<Table\>\""}],
+       "]"}], ",", 
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"_", "?", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"#", "\[NotEqual]", "\"\<#\>\""}], "&"}], ")"}]}], ",", "_",
+        ",", "_"}], "}"}]}], "]"}], "[", 
+   RowBox[{"[", 
+    RowBox[{"All", ",", 
+     RowBox[{"{", 
+      RowBox[{"1", ",", "3"}], "}"}]}], "]"}], "]"}]}]}], "Input",
+ CellChangeTimes->{{3.715407643239629*^9, 3.7154077927511587`*^9}, {
+   3.715408178085231*^9, 3.715408181532186*^9}, {3.7154161774787188`*^9, 
+   3.715416179541121*^9}, 3.71541629768486*^9}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"\<\"PercOn\"\>", ",", "\<\"False\"\>"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"perc_global_scale\"\>", ",", "1.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"perc_sol_scale\"\>", ",", "1.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"perc_filter_scale\"\>", ",", "1.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"NoMoSOn\"\>", ",", "\<\"True\"\>"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"Conductor\"\>", ",", "\<\"NL\"\>"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"particle\"\>", ",", "\<\"e\"\>"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"Raisin\"\>", ",", "0.001`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"water_dia\"\>", ",", "0.0055`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"fieldmap_step\"\>", ",", "0.03`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"RxBconduct\"\>", ",", "0.008`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"RxB_l\"\>", ",", "5"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"RxB_b\"\>", ",", "8"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_RxB\"\>", ",", "0.003`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_RxB\"\>", ",", "39"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"alpha\"\>", ",", "180.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"RxBCurrent\"\>", ",", "220.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"RxBInner\"\>", ",", "0.22`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"FirstLastRxB_scale\"\>", ",", "1.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"RxB_second_scale\"\>", ",", "1.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outlet_l\"\>", ",", "12"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outlet_b\"\>", ",", "9"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_outlet\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_outlet\"\>", ",", "11"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outlet_r_shift\"\>", ",", 
+     RowBox[{"-", "0.04`"}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outlet_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outlet_curr_scale\"\>", ",", "0.6`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outlet_inner\"\>", ",", "0.25`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_outletCorr\"\>", ",", "3"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outletCorr_l\"\>", ",", "5"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outletCorr_b\"\>", ",", "18"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_outletCorr\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outletCorr_r_shift\"\>", ",", 
+     RowBox[{"-", "0.04`"}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outletCorr_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outletCorr_curr_scale\"\>", ",", "0.11`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outletCorr_inner_gap\"\>", ",", "0.01`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outletCorr_fromoutEnd\"\>", ",", "0.3`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_l\"\>", ",", "8"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_b\"\>", ",", "8"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_r_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_curr_scale\"\>", ",", "0.8`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_inner\"\>", ",", "0.35`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_angle\"\>", ",", "3.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_z_shift\"\>", ",", "0.08`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_inlet_l\"\>", ",", "9"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_inlet_b\"\>", ",", "12"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_af_inlet\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_af_inlet\"\>", ",", "7"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_inlet_curr_scale\"\>", ",", "0.32`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_inlet_l\"\>", ",", "9"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_inlet_b\"\>", ",", "12"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_bf_inlet\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_bf_inlet\"\>", ",", "7"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_inlet_curr_scale\"\>", ",", "0.38`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inlet_dv_coil_scale\"\>", ",", "0.09`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inlet_dv_coil_start\"\>", ",", "1"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inlet_dv_offN\"\>", ",", "4"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_inlet_l\"\>", ",", "16"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_inlet_b\"\>", ",", "12"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_inlet_curr_scale\"\>", ",", "1.24`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inlet_r_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inlet_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inlet_inner\"\>", ",", "0.2`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inner_inlet_l\"\>", ",", "16"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inner_inlet_b\"\>", ",", "4"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inner_inlet_r_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inner_inlet_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inner_inlet_curr_scale\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inner_inlet_inner\"\>", ",", "0.159`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_l\"\>", ",", "8"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_b\"\>", ",", "6"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_r_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_curr_scale\"\>", ",", "0.9`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_inner\"\>", ",", "0.325`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_angle\"\>", ",", 
+     RowBox[{"-", "6.`"}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_z_shift\"\>", ",", 
+     RowBox[{"-", "0.02`"}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"pumpport_distance\"\>", ",", "0.23`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"helm_l\"\>", ",", "8"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"helm_b\"\>", ",", "18"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"helm_r_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"helm_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"helm_inner_gap\"\>", ",", "0.01`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"helm_curr_scale\"\>", ",", "1.45`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_filter\"\>", ",", "1"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_filter\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_l\"\>", ",", "14"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_b\"\>", ",", "14"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_r_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_inner_gap\"\>", ",", "0.01`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_curr_scale\"\>", ",", "1.39`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_af_connec\"\>", ",", "5"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"gate_to_pump\"\>", ",", "0.163`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_connec_l\"\>", ",", "9"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_connec_b\"\>", ",", "12"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_af_connec\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_connec_r_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_connec_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_connec_curr_scale\"\>", ",", "0.22`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_connec_inner\"\>", ",", "0.2`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_connec_savedist\"\>", ",", "0.055`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_bf_connec\"\>", ",", "2"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_connec_l\"\>", ",", "4"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_connec_b\"\>", ",", "14"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_bf_connec\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_connec_r_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_connec_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_connec_curr_scale\"\>", ",", "0.4`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_connec_inner\"\>", ",", "0.2`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_connec_savedist\"\>", ",", "0.055`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"gate_dist\"\>", ",", "0.073`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"PERClastcoil_to_flansch\"\>", ",", "0.215`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"flansch_perc_thick\"\>", ",", "0.03`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"coilcenter\"\>", ",", "\<\"false\"\>"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"geo+drift\"\>", ",", "\<\"false\"\>"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bline\"\>", ",", "\<\"false\"\>"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"fieldmap\"\>", ",", "\<\"false\"\>"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"apertYshift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"apertXshift\"\>", ",", "0.02`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"horilines\"\>", ",", "1"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"vertilines\"\>", ",", "1"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"ApertX\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"ApertY\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"detpos\"\>", ",", 
+     RowBox[{"-", "0.5`"}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"MonteCarloData\"\>", ",", "\<\"True\"\>"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"CompareWBlines\"\>", ",", "\<\"False\"\>"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"thetafix\"\>", ",", "\<\"True\"\>"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"ParticleN\"\>", ",", "1"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"EMIN\"\>", ",", "100.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"EMAX\"\>", ",", "700"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"ESTEP\"\>", ",", "600.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"thetamax\"\>", ",", "40.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"thetastep\"\>", ",", "20.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"phimax\"\>", ",", "270.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"phistep\"\>", ",", "90.`"}], "}"}]}], "}"}]], "Output",
+ CellChangeTimes->{3.715416298070002*^9, 3.71541669303335*^9, 
+  3.715417038065366*^9, 3.7154172125160093`*^9, 3.715417527399828*^9, 
+  3.715423312240115*^9}]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"AreaStrings", "=", 
+   RowBox[{"{", 
+    RowBox[{
+    "\"\<RxB\>\"", ",", "\"\<af_inlet\>\"", ",", "\"\<bf_inlet\>\"", ",", 
+     "\"\<filter_inlet\>\"", ",", "\"\<outlet\>\"", ",", "\"\<outletCorr\>\"",
+      ",", "\"\<exit\>\"", ",", "\"\<enter\>\"", ",", "\"\<filter\>\"", ",", 
+     "\"\<helm\>\"", ",", "\"\<af_connec\>\"", ",", "\"\<bf_connec\>\""}], 
+    "}"}]}], ";"}]], "Input",
+ CellChangeTimes->{{3.715415892065207*^9, 3.715415941870583*^9}, {
+   3.715416082405754*^9, 3.71541612311762*^9}, {3.7154164179240828`*^9, 
+   3.715416419003852*^9}, 3.715416587627821*^9}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"coill", "=", 
+  RowBox[{"Table", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"AreaStrings", "[", 
+        RowBox[{"[", "ii", "]"}], "]"}], "<>", "\"\<_l\>\""}], ",", 
+      RowBox[{
+       RowBox[{"Config", "[", 
+        RowBox[{"[", 
+         RowBox[{
+          RowBox[{"Flatten", "[", 
+           RowBox[{
+            RowBox[{"Position", "[", 
+             RowBox[{"Config", ",", 
+              RowBox[{"{", 
+               RowBox[{
+                RowBox[{"_", "?", 
+                 RowBox[{"(", 
+                  RowBox[{
+                   RowBox[{"#", "\[Equal]", 
+                    RowBox[{
+                    RowBox[{"AreaStrings", "[", 
+                    RowBox[{"[", "ii", "]"}], "]"}], "<>", "\"\<_l\>\""}]}], 
+                   "&"}], ")"}]}], ",", "_"}], "}"}]}], "]"}], ",", "1"}], 
+           "]"}], ",", "2"}], "]"}], "]"}], "[", 
+       RowBox[{"[", "1", "]"}], "]"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"ii", ",", "1", ",", "12"}], "}"}]}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.715416430441371*^9, 3.7154165500278683`*^9}, {
+  3.715416700187302*^9, 3.71541670025907*^9}, {3.7154194157097073`*^9, 
+  3.71541941730962*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"\<\"RxB_l\"\>", ",", "5"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_inlet_l\"\>", ",", "9"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_inlet_l\"\>", ",", "9"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_inlet_l\"\>", ",", "16"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outlet_l\"\>", ",", "12"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outletCorr_l\"\>", ",", "5"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_l\"\>", ",", "8"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_l\"\>", ",", "8"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_l\"\>", ",", "14"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"helm_l\"\>", ",", "8"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_connec_l\"\>", ",", "9"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_connec_l\"\>", ",", "4"}], "}"}]}], "}"}]], "Output",
+ CellChangeTimes->{3.715416551183277*^9, 3.715416601195567*^9, 
+  3.71541670195704*^9, 3.715417215419084*^9, 3.7154175296776533`*^9, 
+  3.7154194318896227`*^9, 3.7154233123384438`*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"coilb", "=", 
+  RowBox[{"Table", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"AreaStrings", "[", 
+        RowBox[{"[", "ii", "]"}], "]"}], "<>", "\"\<_b\>\""}], ",", 
+      RowBox[{
+       RowBox[{"Config", "[", 
+        RowBox[{"[", 
+         RowBox[{
+          RowBox[{"Flatten", "[", 
+           RowBox[{
+            RowBox[{"Position", "[", 
+             RowBox[{"Config", ",", 
+              RowBox[{"{", 
+               RowBox[{
+                RowBox[{"_", "?", 
+                 RowBox[{"(", 
+                  RowBox[{
+                   RowBox[{"#", "\[Equal]", 
+                    RowBox[{
+                    RowBox[{"AreaStrings", "[", 
+                    RowBox[{"[", "ii", "]"}], "]"}], "<>", "\"\<_b\>\""}]}], 
+                   "&"}], ")"}]}], ",", "_"}], "}"}]}], "]"}], ",", "1"}], 
+           "]"}], ",", "2"}], "]"}], "]"}], "[", 
+       RowBox[{"[", "1", "]"}], "]"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"ii", ",", "1", ",", "12"}], "}"}]}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.715416710293621*^9, 3.715416721338929*^9}, {
+  3.715419419365779*^9, 3.7154194203975077`*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"\<\"RxB_b\"\>", ",", "8"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_inlet_b\"\>", ",", "12"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_inlet_b\"\>", ",", "12"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_inlet_b\"\>", ",", "12"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outlet_b\"\>", ",", "9"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outletCorr_b\"\>", ",", "18"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_b\"\>", ",", "8"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_b\"\>", ",", "6"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_b\"\>", ",", "14"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"helm_b\"\>", ",", "18"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_connec_b\"\>", ",", "12"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_connec_b\"\>", ",", "14"}], "}"}]}], "}"}]], "Output",
+ CellChangeTimes->{3.715416722196673*^9, 3.715417216614813*^9, 
+  3.715417530316559*^9, 3.7154194334772987`*^9, 3.715423312407009*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"dcoil", "=", 
+  RowBox[{"Table", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"\"\<d_\>\"", "<>", 
+       RowBox[{"AreaStrings", "[", 
+        RowBox[{"[", "ii", "]"}], "]"}]}], ",", 
+      RowBox[{
+       RowBox[{"Config", "[", 
+        RowBox[{"[", 
+         RowBox[{
+          RowBox[{"Flatten", "[", 
+           RowBox[{
+            RowBox[{"Position", "[", 
+             RowBox[{"Config", ",", 
+              RowBox[{"{", 
+               RowBox[{
+                RowBox[{"_", "?", 
+                 RowBox[{"(", 
+                  RowBox[{
+                   RowBox[{"#", "\[Equal]", 
+                    RowBox[{"\"\<d_\>\"", "<>", 
+                    RowBox[{"AreaStrings", "[", 
+                    RowBox[{"[", "ii", "]"}], "]"}]}]}], "&"}], ")"}]}], ",", 
+                "_"}], "}"}]}], "]"}], ",", "1"}], "]"}], ",", "2"}], "]"}], 
+        "]"}], "[", 
+       RowBox[{"[", "1", "]"}], "]"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"ii", ",", 
+      RowBox[{"{", 
+       RowBox[{
+       "1", ",", "2", ",", "3", ",", "5", ",", "6", ",", "9", ",", "11", ",", 
+        "12"}], "}"}]}], "}"}]}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.7154170059126663`*^9, 3.715417140737039*^9}, {
+  3.715419422917583*^9, 3.715419424261545*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"\<\"d_RxB\"\>", ",", "0.003`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_af_inlet\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_bf_inlet\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_outlet\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_outletCorr\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_filter\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_af_connec\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_bf_connec\"\>", ",", "0.005`"}], "}"}]}], "}"}]], "Output",\
+
+ CellChangeTimes->{{3.715417032143046*^9, 3.715417141409751*^9}, 
+   3.715417217586616*^9, 3.715417531072371*^9, 3.715423312469702*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"ncoil", "=", 
+  RowBox[{"Table", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"\"\<n_\>\"", "<>", 
+       RowBox[{"AreaStrings", "[", 
+        RowBox[{"[", "ii", "]"}], "]"}]}], ",", 
+      RowBox[{
+       RowBox[{"Config", "[", 
+        RowBox[{"[", 
+         RowBox[{
+          RowBox[{"Flatten", "[", 
+           RowBox[{
+            RowBox[{"Position", "[", 
+             RowBox[{"Config", ",", 
+              RowBox[{"{", 
+               RowBox[{
+                RowBox[{"_", "?", 
+                 RowBox[{"(", 
+                  RowBox[{
+                   RowBox[{"#", "\[Equal]", 
+                    RowBox[{"\"\<n_\>\"", "<>", 
+                    RowBox[{"AreaStrings", "[", 
+                    RowBox[{"[", "ii", "]"}], "]"}]}]}], "&"}], ")"}]}], ",", 
+                "_"}], "}"}]}], "]"}], ",", "1"}], "]"}], ",", "2"}], "]"}], 
+        "]"}], "[", 
+       RowBox[{"[", "1", "]"}], "]"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"ii", ",", 
+      RowBox[{"{", 
+       RowBox[{
+       "1", ",", "2", ",", "3", ",", "5", ",", "6", ",", "11", ",", "12"}], 
+       "}"}]}], "}"}]}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.7154171700901117`*^9, 3.715417172600889*^9}, {
+  3.715417223154209*^9, 3.7154172556328773`*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"\<\"n_RxB\"\>", ",", "39"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_af_inlet\"\>", ",", "7"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_bf_inlet\"\>", ",", "7"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_outlet\"\>", ",", "11"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_outletCorr\"\>", ",", "3"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_af_connec\"\>", ",", "5"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_bf_connec\"\>", ",", "2"}], "}"}]}], "}"}]], "Output",
+ CellChangeTimes->{{3.7154172312047863`*^9, 3.7154172599906063`*^9}, 
+   3.7154175317799873`*^9, 3.715423312529348*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"\[Alpha]", "=", 
+  RowBox[{
+   RowBox[{"Config", "[", 
+    RowBox[{"[", 
+     RowBox[{
+      RowBox[{"Flatten", "[", 
+       RowBox[{
+        RowBox[{"Position", "[", 
+         RowBox[{"Config", ",", 
+          RowBox[{"{", 
+           RowBox[{
+            RowBox[{"_", "?", 
+             RowBox[{"(", 
+              RowBox[{
+               RowBox[{"#", "\[Equal]", "\"\<alpha\>\""}], "&"}], ")"}]}], 
+            ",", "_"}], "}"}]}], "]"}], ",", "1"}], "]"}], ",", "2"}], "]"}], 
+    "]"}], "[", 
+   RowBox[{"[", "1", "]"}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.715417692817994*^9, 3.715417713918769*^9}}],
+
+Cell[BoxData["180.`"], "Output",
+ CellChangeTimes->{3.715417717257142*^9, 3.715423312537889*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"If", "[", 
+  RowBox[{
+   RowBox[{
+    RowBox[{
+     RowBox[{"Config", "[", 
+      RowBox[{"[", 
+       RowBox[{
+        RowBox[{"Flatten", "[", 
+         RowBox[{
+          RowBox[{"Position", "[", 
+           RowBox[{"Config", ",", 
+            RowBox[{"{", 
+             RowBox[{
+              RowBox[{"_", "?", 
+               RowBox[{"(", 
+                RowBox[{
+                 RowBox[{"#", "\[Equal]", "\"\<Conductor\>\""}], "&"}], 
+                ")"}]}], ",", "_"}], "}"}]}], "]"}], ",", "1"}], "]"}], ",", 
+        "2"}], "]"}], "]"}], "[", 
+     RowBox[{"[", "1", "]"}], "]"}], "\[Equal]", "\"\<NL\>\""}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"Conductl", "=", "0.008"}], ",", 
+     RowBox[{"Conductb", "=", "0.008"}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"Conductl", "=", "0.0045"}], ",", 
+     RowBox[{"Conductb", "=", "0.00065"}]}], "}"}]}], "]"}]], "Input",
+ CellChangeTimes->{{3.7154182517791433`*^9, 3.715418340907158*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{"0.008`", ",", "0.008`"}], "}"}]], "Output",
+ CellChangeTimes->{3.7154183427246*^9, 3.715423312591219*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"raisin", "=", 
+  RowBox[{
+   RowBox[{"Config", "[", 
+    RowBox[{"[", 
+     RowBox[{
+      RowBox[{"Flatten", "[", 
+       RowBox[{
+        RowBox[{"Position", "[", 
+         RowBox[{"Config", ",", 
+          RowBox[{"{", 
+           RowBox[{
+            RowBox[{"_", "?", 
+             RowBox[{"(", 
+              RowBox[{
+               RowBox[{"#", "\[Equal]", "\"\<Raisin\>\""}], "&"}], ")"}]}], 
+            ",", "_"}], "}"}]}], "]"}], ",", "1"}], "]"}], ",", "2"}], "]"}], 
+    "]"}], "[", 
+   RowBox[{"[", "1", "]"}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.7154184411433268`*^9, 3.7154184510189962`*^9}}],
+
+Cell[BoxData["0.001`"], "Output",
+ CellChangeTimes->{3.7154184525237103`*^9, 3.715423312655024*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"RxBCurrent", "=", 
+  RowBox[{
+   RowBox[{"Config", "[", 
+    RowBox[{"[", 
+     RowBox[{
+      RowBox[{"Flatten", "[", 
+       RowBox[{
+        RowBox[{"Position", "[", 
+         RowBox[{"Config", ",", 
+          RowBox[{"{", 
+           RowBox[{
+            RowBox[{"_", "?", 
+             RowBox[{"(", 
+              RowBox[{
+               RowBox[{"#", "\[Equal]", "\"\<RxBCurrent\>\""}], "&"}], 
+              ")"}]}], ",", "_"}], "}"}]}], "]"}], ",", "1"}], "]"}], ",", 
+      "2"}], "]"}], "]"}], "[", 
+   RowBox[{"[", "1", "]"}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.715418946751794*^9, 3.715418954703744*^9}}],
+
+Cell[BoxData["220.`"], "Output",
+ CellChangeTimes->{3.7154189552962418`*^9, 3.715423312721703*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"CurrScale", "=", 
+  RowBox[{"Table", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"AreaStrings", "[", 
+        RowBox[{"[", "ii", "]"}], "]"}], "<>", "\"\<_curr_scale\>\""}], ",", 
+      RowBox[{
+       RowBox[{"Config", "[", 
+        RowBox[{"[", 
+         RowBox[{
+          RowBox[{"Flatten", "[", 
+           RowBox[{
+            RowBox[{"Position", "[", 
+             RowBox[{"Config", ",", 
+              RowBox[{"{", 
+               RowBox[{
+                RowBox[{"_", "?", 
+                 RowBox[{"(", 
+                  RowBox[{
+                   RowBox[{"#", "\[Equal]", 
+                    RowBox[{
+                    RowBox[{"AreaStrings", "[", 
+                    RowBox[{"[", "ii", "]"}], "]"}], "<>", 
+                    "\"\<_curr_scale\>\""}]}], "&"}], ")"}]}], ",", "_"}], 
+               "}"}]}], "]"}], ",", "1"}], "]"}], ",", "2"}], "]"}], "]"}], 
+       "[", 
+       RowBox[{"[", "1", "]"}], "]"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"ii", ",", "2", ",", "12"}], "}"}]}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.7154189761759577`*^9, 3.715419012895535*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"\<\"af_inlet_curr_scale\"\>", ",", "0.32`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_inlet_curr_scale\"\>", ",", "0.38`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_inlet_curr_scale\"\>", ",", "1.24`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outlet_curr_scale\"\>", ",", "0.6`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outletCorr_curr_scale\"\>", ",", "0.11`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_curr_scale\"\>", ",", "0.8`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_curr_scale\"\>", ",", "0.9`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_curr_scale\"\>", ",", "1.39`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"helm_curr_scale\"\>", ",", "1.45`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_connec_curr_scale\"\>", ",", "0.22`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_connec_curr_scale\"\>", ",", "0.4`"}], "}"}]}], 
+  "}"}]], "Output",
+ CellChangeTimes->{3.7154190143756323`*^9, 3.715419332341514*^9, 
+  3.715423312781047*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"PrependTo", "[", 
+  RowBox[{"CurrScale", ",", 
+   RowBox[{"{", 
+    RowBox[{"\"\<RxB_curr_scale\>\"", ",", "1."}], "}"}]}], "]"}]], "Input",
+ CellChangeTimes->{{3.7154192263882236`*^9, 3.715419254454288*^9}, {
+  3.71541932797451*^9, 3.7154193287419558`*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"\<\"RxB_curr_scale\"\>", ",", "1.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_inlet_curr_scale\"\>", ",", "0.32`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_inlet_curr_scale\"\>", ",", "0.38`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_inlet_curr_scale\"\>", ",", "1.24`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outlet_curr_scale\"\>", ",", "0.6`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outletCorr_curr_scale\"\>", ",", "0.11`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_curr_scale\"\>", ",", "0.8`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_curr_scale\"\>", ",", "0.9`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_curr_scale\"\>", ",", "1.39`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"helm_curr_scale\"\>", ",", "1.45`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_connec_curr_scale\"\>", ",", "0.22`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_connec_curr_scale\"\>", ",", "0.4`"}], "}"}]}], 
+  "}"}]], "Output",
+ CellChangeTimes->{3.7154192558809147`*^9, 3.7154193341651917`*^9, 
+  3.715423312844078*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Now overwrite lcoil etc with \[OpenCurlyDoubleQuote]l_coil_RxB\
+\[CloseCurlyDoubleQuote] for output", "Subsection",
+ CellChangeTimes->{{3.7154180179429007`*^9, 3.7154180331097307`*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"lcoil", "=", 
+  RowBox[{"Table", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"\"\<l_coil_\>\"", "<>", 
+       RowBox[{"AreaStrings", "[", 
+        RowBox[{"[", "ii", "]"}], "]"}]}], ",", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"coill", "[", 
+         RowBox[{"[", 
+          RowBox[{"ii", ",", "2"}], "]"}], "]"}], "*", "Conductl"}], "+", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"coill", "[", 
+           RowBox[{"[", 
+            RowBox[{"ii", ",", "2"}], "]"}], "]"}], "-", "1"}], ")"}], "*", 
+        "raisin"}]}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"ii", ",", "1", ",", "12"}], "}"}]}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.715418036463635*^9, 3.715418038132306*^9}, {
+  3.715418368811079*^9, 3.715418470386797*^9}, {3.715419444749639*^9, 
+  3.7154194497412777`*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_RxB\"\>", ",", "0.044`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_af_inlet\"\>", ",", "0.08000000000000002`"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_bf_inlet\"\>", ",", "0.08000000000000002`"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_filter_inlet\"\>", ",", "0.14300000000000002`"}], 
+    "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_outlet\"\>", ",", "0.107`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_outletCorr\"\>", ",", "0.044`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_exit\"\>", ",", "0.07100000000000001`"}], "}"}], ",", 
+   
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_enter\"\>", ",", "0.07100000000000001`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_filter\"\>", ",", "0.125`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_helm\"\>", ",", "0.07100000000000001`"}], "}"}], ",", 
+   
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_af_connec\"\>", ",", "0.08000000000000002`"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_bf_connec\"\>", ",", "0.035`"}], "}"}]}], 
+  "}"}]], "Output",
+ CellChangeTimes->{3.715418471281472*^9, 3.715419460330949*^9, 
+  3.715423312913299*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"bcoil", "=", 
+  RowBox[{"Table", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"\"\<b_coil_\>\"", "<>", 
+       RowBox[{"AreaStrings", "[", 
+        RowBox[{"[", "ii", "]"}], "]"}]}], ",", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"coilb", "[", 
+         RowBox[{"[", 
+          RowBox[{"ii", ",", "2"}], "]"}], "]"}], "*", "Conductb"}], "+", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"coilb", "[", 
+           RowBox[{"[", 
+            RowBox[{"ii", ",", "2"}], "]"}], "]"}], "-", "1"}], ")"}], "*", 
+        "raisin"}]}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"ii", ",", "1", ",", "12"}], "}"}]}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.7154188383525543`*^9, 3.715418848241571*^9}, {
+  3.7154194522691793`*^9, 3.715419456613097*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_RxB\"\>", ",", "0.07100000000000001`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_af_inlet\"\>", ",", "0.107`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_bf_inlet\"\>", ",", "0.107`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_filter_inlet\"\>", ",", "0.107`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_outlet\"\>", ",", "0.08000000000000002`"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_outletCorr\"\>", ",", "0.16100000000000003`"}], "}"}],
+    ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_exit\"\>", ",", "0.07100000000000001`"}], "}"}], ",", 
+   
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_enter\"\>", ",", "0.053`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_filter\"\>", ",", "0.125`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_helm\"\>", ",", "0.16100000000000003`"}], "}"}], ",", 
+   
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_af_connec\"\>", ",", "0.107`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_bf_connec\"\>", ",", "0.125`"}], "}"}]}], 
+  "}"}]], "Output",
+ CellChangeTimes->{3.715418858024341*^9, 3.715419461226275*^9, 
+  3.715423312983522*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"CurrDens", "=", 
+  RowBox[{"Table", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"\"\<currdens_\>\"", "<>", 
+       RowBox[{"AreaStrings", "[", 
+        RowBox[{"[", "ii", "]"}], "]"}]}], ",", 
+      RowBox[{"RxBCurrent", "*", 
+       RowBox[{"CurrScale", "[", 
+        RowBox[{"[", 
+         RowBox[{"ii", ",", "2"}], "]"}], "]"}], "*", 
+       RowBox[{"coill", "[", 
+        RowBox[{"[", 
+         RowBox[{"ii", ",", "2"}], "]"}], "]"}], "*", 
+       RowBox[{
+        RowBox[{"coilb", "[", 
+         RowBox[{"[", 
+          RowBox[{"ii", ",", "2"}], "]"}], "]"}], "/", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"lcoil", "[", 
+           RowBox[{"[", 
+            RowBox[{"ii", ",", "2"}], "]"}], "]"}], "*", 
+          RowBox[{"bcoil", "[", 
+           RowBox[{"[", 
+            RowBox[{"ii", ",", "2"}], "]"}], "]"}]}], ")"}]}]}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"ii", ",", "1", ",", "12"}], "}"}]}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.715419263615012*^9, 3.7154193099019203`*^9}, {
+  3.715419353958151*^9, 3.7154193992053947`*^9}, {3.715419465189084*^9, 
+  3.715419491997264*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_RxB\"\>", ",", "2.8169014084507045`*^6"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_af_inlet\"\>", ",", "888224.2990654204`"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_bf_inlet\"\>", ",", "1.0547663551401866`*^6"}], 
+    "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_filter_inlet\"\>", ",", "3.423148813803019`*^6"}], 
+    "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_outlet\"\>", ",", "1.6654205607476633`*^6"}], "}"}],
+    ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_outletCorr\"\>", ",", "307453.4161490683`"}], "}"}],
+    ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_exit\"\>", ",", "2.2344772862527273`*^6"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_enter\"\>", ",", "2.525644432633537`*^6"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_filter\"\>", ",", "3.8359551999999993`*^6"}], "}"}],
+    ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_helm\"\>", ",", "4.0185460589624695`*^6"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_af_connec\"\>", ",", "610654.2056074764`"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_bf_connec\"\>", ",", "1.1264`*^6"}], "}"}]}], 
+  "}"}]], "Output",
+ CellChangeTimes->{3.71541949270573*^9, 3.715423313056678*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"RxBInner", "=", 
+  RowBox[{
+   RowBox[{"Config", "[", 
+    RowBox[{"[", 
+     RowBox[{
+      RowBox[{"Flatten", "[", 
+       RowBox[{
+        RowBox[{"Position", "[", 
+         RowBox[{"Config", ",", 
+          RowBox[{"{", 
+           RowBox[{
+            RowBox[{"_", "?", 
+             RowBox[{"(", 
+              RowBox[{
+               RowBox[{"#", "\[Equal]", "\"\<RxBInner\>\""}], "&"}], ")"}]}], 
+            ",", "_"}], "}"}]}], "]"}], ",", "1"}], "]"}], ",", "2"}], "]"}], 
+    "]"}], "[", 
+   RowBox[{"[", "1", "]"}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.715419691374152*^9, 3.71541970346001*^9}}],
+
+Cell[BoxData["0.22`"], "Output",
+ CellChangeTimes->{3.71541970393267*^9, 3.715423313131631*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"R", "=", 
+  RowBox[{"{", 
+   RowBox[{"{", 
+    RowBox[{"\"\<R\>\"", ",", 
+     RowBox[{"RxBInner", "+", 
+      RowBox[{"bcoil", "[", 
+       RowBox[{"[", 
+        RowBox[{"1", ",", "2"}], "]"}], "]"}], "+", 
+      RowBox[{"2.", "*", "raisin"}], "+", 
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"(", 
+           RowBox[{
+            RowBox[{"lcoil", "[", 
+             RowBox[{"[", 
+              RowBox[{"1", ",", "2"}], "]"}], "]"}], "+", 
+            RowBox[{"2", "*", "raisin"}]}], ")"}], "/", "2."}], "+", 
+         RowBox[{"dcoil", "[", 
+          RowBox[{"[", 
+           RowBox[{"1", ",", "2"}], "]"}], "]"}]}], ")"}], "/", 
+       RowBox[{"Tan", "[", 
+        RowBox[{
+         RowBox[{"\[Alpha]", "/", "180"}], "*", 
+         RowBox[{"Pi", "/", 
+          RowBox[{"(", 
+           RowBox[{"2", "*", 
+            RowBox[{"(", 
+             RowBox[{
+              RowBox[{"ncoil", "[", 
+               RowBox[{"[", 
+                RowBox[{"1", ",", "2"}], "]"}], "]"}], "-", "1"}], ")"}]}], 
+           ")"}]}]}], "]"}]}]}]}], "}"}], "}"}]}]], "Input",
+ CellChangeTimes->{{3.715419667645989*^9, 3.715419792131853*^9}, {
+  3.7154199717387867`*^9, 3.715419994402349*^9}, {3.715420240713426*^9, 
+  3.7154202422111893`*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{"{", 
+   RowBox[{"\<\"R\"\>", ",", "0.9216220424884081`"}], "}"}], "}"}]], "Output",\
+
+ CellChangeTimes->{
+  3.715419793628731*^9, {3.7154199540458183`*^9, 3.7154199949653597`*^9}, 
+   3.7154202426049347`*^9, 3.715423313207489*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"ExportList", "=", 
+  RowBox[{"Join", "[", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"Cases", "[", 
+     RowBox[{"Config", ",", 
+      RowBox[{"{", 
+       RowBox[{"_", ",", 
+        RowBox[{"_", "?", "NumberQ"}]}], "}"}]}], "]"}], ",", 
+    "\[IndentingNewLine]", "lcoil", ",", "\[IndentingNewLine]", "bcoil", ",", 
+    "\[IndentingNewLine]", "CurrDens", ",", "\[IndentingNewLine]", "R"}], 
+   "\[IndentingNewLine]", "]"}]}]], "Input",
+ CellChangeTimes->{{3.715420045842669*^9, 3.715420194129938*^9}, {
+  3.715420231545567*^9, 3.715420232225698*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"\<\"perc_global_scale\"\>", ",", "1.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"perc_sol_scale\"\>", ",", "1.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"perc_filter_scale\"\>", ",", "1.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"Raisin\"\>", ",", "0.001`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"water_dia\"\>", ",", "0.0055`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"fieldmap_step\"\>", ",", "0.03`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"RxBconduct\"\>", ",", "0.008`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"RxB_l\"\>", ",", "5"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"RxB_b\"\>", ",", "8"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_RxB\"\>", ",", "0.003`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_RxB\"\>", ",", "39"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"alpha\"\>", ",", "180.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"RxBCurrent\"\>", ",", "220.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"RxBInner\"\>", ",", "0.22`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"FirstLastRxB_scale\"\>", ",", "1.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"RxB_second_scale\"\>", ",", "1.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outlet_l\"\>", ",", "12"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outlet_b\"\>", ",", "9"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_outlet\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_outlet\"\>", ",", "11"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outlet_r_shift\"\>", ",", 
+     RowBox[{"-", "0.04`"}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outlet_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outlet_curr_scale\"\>", ",", "0.6`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outlet_inner\"\>", ",", "0.25`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_outletCorr\"\>", ",", "3"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outletCorr_l\"\>", ",", "5"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outletCorr_b\"\>", ",", "18"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_outletCorr\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outletCorr_r_shift\"\>", ",", 
+     RowBox[{"-", "0.04`"}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outletCorr_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outletCorr_curr_scale\"\>", ",", "0.11`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outletCorr_inner_gap\"\>", ",", "0.01`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"outletCorr_fromoutEnd\"\>", ",", "0.3`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_l\"\>", ",", "8"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_b\"\>", ",", "8"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_r_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_curr_scale\"\>", ",", "0.8`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_inner\"\>", ",", "0.35`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_angle\"\>", ",", "3.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"exit_z_shift\"\>", ",", "0.08`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_inlet_l\"\>", ",", "9"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_inlet_b\"\>", ",", "12"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_af_inlet\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_af_inlet\"\>", ",", "7"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_inlet_curr_scale\"\>", ",", "0.32`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_inlet_l\"\>", ",", "9"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_inlet_b\"\>", ",", "12"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_bf_inlet\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_bf_inlet\"\>", ",", "7"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_inlet_curr_scale\"\>", ",", "0.38`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inlet_dv_coil_scale\"\>", ",", "0.09`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inlet_dv_coil_start\"\>", ",", "1"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inlet_dv_offN\"\>", ",", "4"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_inlet_l\"\>", ",", "16"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_inlet_b\"\>", ",", "12"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_inlet_curr_scale\"\>", ",", "1.24`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inlet_r_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inlet_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inlet_inner\"\>", ",", "0.2`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inner_inlet_l\"\>", ",", "16"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inner_inlet_b\"\>", ",", "4"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inner_inlet_r_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inner_inlet_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inner_inlet_curr_scale\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"inner_inlet_inner\"\>", ",", "0.159`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_l\"\>", ",", "8"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_b\"\>", ",", "6"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_r_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_curr_scale\"\>", ",", "0.9`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_inner\"\>", ",", "0.325`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_angle\"\>", ",", 
+     RowBox[{"-", "6.`"}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"enter_z_shift\"\>", ",", 
+     RowBox[{"-", "0.02`"}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"pumpport_distance\"\>", ",", "0.23`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"helm_l\"\>", ",", "8"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"helm_b\"\>", ",", "18"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"helm_r_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"helm_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"helm_inner_gap\"\>", ",", "0.01`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"helm_curr_scale\"\>", ",", "1.45`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_filter\"\>", ",", "1"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_filter\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_l\"\>", ",", "14"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_b\"\>", ",", "14"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_r_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_inner_gap\"\>", ",", "0.01`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"filter_curr_scale\"\>", ",", "1.39`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_af_connec\"\>", ",", "5"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"gate_to_pump\"\>", ",", "0.163`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_connec_l\"\>", ",", "9"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_connec_b\"\>", ",", "12"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_af_connec\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_connec_r_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_connec_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_connec_curr_scale\"\>", ",", "0.22`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_connec_inner\"\>", ",", "0.2`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"af_connec_savedist\"\>", ",", "0.055`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"n_bf_connec\"\>", ",", "2"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_connec_l\"\>", ",", "4"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_connec_b\"\>", ",", "14"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d_bf_connec\"\>", ",", "0.005`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_connec_r_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_connec_x_shift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_connec_curr_scale\"\>", ",", "0.4`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_connec_inner\"\>", ",", "0.2`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"bf_connec_savedist\"\>", ",", "0.055`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"gate_dist\"\>", ",", "0.073`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"PERClastcoil_to_flansch\"\>", ",", "0.215`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"flansch_perc_thick\"\>", ",", "0.03`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"apertYshift\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"apertXshift\"\>", ",", "0.02`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"horilines\"\>", ",", "1"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"vertilines\"\>", ",", "1"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"ApertX\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"ApertY\"\>", ",", "0.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"detpos\"\>", ",", 
+     RowBox[{"-", "0.5`"}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"ParticleN\"\>", ",", "1"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"EMIN\"\>", ",", "100.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"EMAX\"\>", ",", "700"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"ESTEP\"\>", ",", "600.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"thetamax\"\>", ",", "40.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"thetastep\"\>", ",", "20.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"phimax\"\>", ",", "270.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"phistep\"\>", ",", "90.`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_RxB\"\>", ",", "0.044`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_af_inlet\"\>", ",", "0.08000000000000002`"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_bf_inlet\"\>", ",", "0.08000000000000002`"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_filter_inlet\"\>", ",", "0.14300000000000002`"}], 
+    "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_outlet\"\>", ",", "0.107`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_outletCorr\"\>", ",", "0.044`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_exit\"\>", ",", "0.07100000000000001`"}], "}"}], ",", 
+   
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_enter\"\>", ",", "0.07100000000000001`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_filter\"\>", ",", "0.125`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_helm\"\>", ",", "0.07100000000000001`"}], "}"}], ",", 
+   
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_af_connec\"\>", ",", "0.08000000000000002`"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l_coil_bf_connec\"\>", ",", "0.035`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_RxB\"\>", ",", "0.07100000000000001`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_af_inlet\"\>", ",", "0.107`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_bf_inlet\"\>", ",", "0.107`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_filter_inlet\"\>", ",", "0.107`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_outlet\"\>", ",", "0.08000000000000002`"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_outletCorr\"\>", ",", "0.16100000000000003`"}], "}"}],
+    ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_exit\"\>", ",", "0.07100000000000001`"}], "}"}], ",", 
+   
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_enter\"\>", ",", "0.053`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_filter\"\>", ",", "0.125`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_helm\"\>", ",", "0.16100000000000003`"}], "}"}], ",", 
+   
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_af_connec\"\>", ",", "0.107`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b_coil_bf_connec\"\>", ",", "0.125`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_RxB\"\>", ",", "2.8169014084507045`*^6"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_af_inlet\"\>", ",", "888224.2990654204`"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_bf_inlet\"\>", ",", "1.0547663551401866`*^6"}], 
+    "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_filter_inlet\"\>", ",", "3.423148813803019`*^6"}], 
+    "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_outlet\"\>", ",", "1.6654205607476633`*^6"}], "}"}],
+    ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_outletCorr\"\>", ",", "307453.4161490683`"}], "}"}],
+    ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_exit\"\>", ",", "2.2344772862527273`*^6"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_enter\"\>", ",", "2.525644432633537`*^6"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_filter\"\>", ",", "3.8359551999999993`*^6"}], "}"}],
+    ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_helm\"\>", ",", "4.0185460589624695`*^6"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_af_connec\"\>", ",", "610654.2056074764`"}], "}"}], 
+   ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"currdens_bf_connec\"\>", ",", "1.1264`*^6"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"R\"\>", ",", "0.9216220424884081`"}], "}"}]}], 
+  "}"}]], "Output",
+ CellChangeTimes->{{3.7154201138576097`*^9, 3.715420124894123*^9}, {
+  3.7154201701463203`*^9, 3.71542018089312*^9}, {3.7154202345593157`*^9, 
+  3.715420243530623*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Export", "[", 
+  RowBox[{
+   RowBox[{"InputName", "<>", "\"\<_COMSOL.txt\>\""}], ",", "ExportList", 
+   ",", "\"\<Table\>\""}], "]"}]], "Input",
+ CellChangeTimes->{{3.715408144230167*^9, 3.7154081460885267`*^9}, {
+  3.715408192563743*^9, 3.715408211980001*^9}, {3.715408603898272*^9, 
+  3.715408605377887*^9}, {3.7154202535701942`*^9, 3.715420255241164*^9}}],
+
+Cell[BoxData["\<\"NoMoS_newConnec_COMSOL.txt\"\>"], "Output",
+ CellChangeTimes->{3.715408213129553*^9, 3.7154086097891417`*^9, 
+  3.715420257138031*^9}]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{1855, 1056},
+WindowMargins->{{Automatic, 0}, {0, Automatic}},
+FrontEndVersion->"10.3 for Linux x86 (64-bit) (October 9, 2015)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 163, 3, 32, "Input"],
+Cell[CellGroupData[{
+Cell[746, 27, 921, 27, 55, "Input"],
+Cell[1670, 56, 11430, 284, 363, "Output"]
+}, Open  ]],
+Cell[13115, 343, 611, 12, 32, "Input"],
+Cell[CellGroupData[{
+Cell[13751, 359, 1222, 33, 32, "Input"],
+Cell[14976, 394, 1141, 29, 32, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[16154, 428, 1173, 32, 32, "Input"],
+Cell[17330, 462, 1096, 28, 32, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[18463, 495, 1290, 36, 32, "Input"],
+Cell[19756, 533, 834, 21, 32, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[20627, 559, 1281, 36, 32, "Input"],
+Cell[21911, 597, 704, 18, 32, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[22652, 620, 634, 19, 32, "Input"],
+Cell[23289, 641, 96, 1, 32, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[23422, 647, 999, 29, 32, "Input"],
+Cell[24424, 678, 145, 3, 32, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[24606, 686, 637, 19, 32, "Input"],
+Cell[25246, 707, 99, 1, 32, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[25382, 713, 645, 19, 32, "Input"],
+Cell[26030, 734, 98, 1, 32, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[26165, 740, 1159, 32, 32, "Input"],
+Cell[27327, 774, 1115, 27, 55, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[28479, 806, 282, 6, 32, "Input"],
+Cell[28764, 814, 1199, 29, 55, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[30000, 848, 191, 2, 47, "Subsection"],
+Cell[CellGroupData[{
+Cell[30216, 854, 873, 25, 32, "Input"],
+Cell[31092, 881, 1288, 35, 55, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[32417, 921, 826, 24, 32, "Input"],
+Cell[33246, 947, 1251, 33, 55, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[34534, 985, 1164, 32, 32, "Input"],
+Cell[35701, 1019, 1375, 39, 62, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[37113, 1063, 636, 19, 32, "Input"],
+Cell[37752, 1084, 95, 1, 32, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[37884, 1090, 1298, 37, 32, "Input"],
+Cell[39185, 1129, 270, 7, 32, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[39492, 1141, 580, 13, 165, "Input"],
+Cell[40075, 1156, 14087, 358, 462, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[54199, 1519, 382, 7, 32, "Input"],
+Cell[54584, 1528, 152, 2, 32, "Output"]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)
