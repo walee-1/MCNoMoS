@@ -1,5 +1,5 @@
 
-void trajelectronN(string filename,int N,double StartgyraR,double apertYshift,double apertXshift);
+void trajelectronN(string conclusionfilename,int N,double StartgyraR,ofstream& OutStream);
 void trajelectron1(double *x,double *v,int& electronindex);
 void velocity(double *n,double kin_energy,double costheta,double phi,double *v);
 void electronstart(double z,double r,double costheta,double phidir,double Ekin,double *x,double *v);
@@ -21,9 +21,9 @@ struct typeelectrontraj{
         double Errenergy;       // Energy error [eV]
         double Time;            // particle flight time [s]
     // Parameters of the starting disk = source of the particles representing an appertur or a beam
-        double Xstart;          // x-coordinat of the starting disk center [m]
-        double Ystart;          // y-coordinat of the starting disk center [m]
-        double Zstart;          // z-coordinat of the starting disk center [m]
+        double Xstart, ApertGridX;          // x-coordinat of the starting disk center [m]
+        double Ystart, ApertGridY;          // y-coordinat of the starting disk center [m]
+        double Zstart, ApertGridZ;          // z-coordinat of the starting disk center [m]
         double Rstartmax;       // radius of the starting disk [m]
         double thetaStartmax;   // maximal emission angle of particles in forward direction [rad]
         int theta_fix;          // = 0: theta <= thetaStartmax,  =1: theta = thetaStartmax
@@ -34,7 +34,9 @@ struct typeelectrontraj{
     // NoMoS parameters:
         double R_1;             // radius of the spectrometer
 	bool CompareWBlines;
+	bool MonteCarlo;
 	bool PercOn;
+	bool G4Compare;
     // simulation settings:
         int numstepmax;         // maximum number of Runge-Kutta steps
         double Timemax;         // Maximal time [s]
@@ -60,7 +62,7 @@ commonelectrontraj;
 
 /////////////////////////////////////////////////////////
 
-void trajelectronN(string filename, int N,double StartgyraR,double apertYshift,double apertXshift){     // Trajectory calculation of N number of electrons.
+void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream& OutStream){     // Trajectory calculation of N number of electrons.
 
 	double PI = 3.1415926;
 	int ie;                         // particle counter
@@ -79,106 +81,222 @@ void trajelectronN(string filename, int N,double StartgyraR,double apertYshift,d
 	std::stringstream CompareFileName;
 	double CrossP[4], CrossPL, GuidX[4], GuidB[4];
 
-	// CONCLUSION FILE append (HEADER already written in MAIN)
-	outfile.open(filename.c_str(),ios::app);
 	
-	// Electron loop:
-	for(ie=1;ie<=N;ie++){
+	// COMPARE WITH BLINES
+	if( commonelectrontraj.CompareWBlines ){
 		
-		////////   Writing in CONCLUSION FILE at the start  ///////////////////
+		outfile.open(conclusionfilename.c_str(),ios::app);
+
+		// Particle loop:
+		for(ie=1;ie<=N;ie++){
+			
+			////////   Writing in CONCLUSION FILE at the start  /////////////////// only for compare with Blines
+			if( commonelectrontraj.CompareWBlines ){
+			        outfile << commonelectrontraj.ApertGridX << "\t" << commonelectrontraj.ApertGridY;
+			        outfile << "\t" << commonelectrontraj.thetaStartmax << "\t" << commonelectrontraj.Ekin;
+				outfile << "\t" << commonelectrontraj.Startphi << "\t" << ie;
+			}
 		
-		if( commonelectrontraj.CompareWBlines ){
-		        outfile << commonelectrontraj.Xstart << "\t" << commonelectrontraj.Ystart;
+		
+			// Detailed tracking filename: definieing the path and the filename, dependent on CompareWBlines
+			if(commonelectrontraj.typeprint==1){
+			    if( commonelectrontraj.CompareWBlines ) {
+			    	CompareFileName << commonelectrontraj.filepath << "trajectories/" << "X" << commonelectrontraj.ApertGridX << "_Y" << commonelectrontraj.ApertGridY;
+			    	CompareFileName << "_th" << commonelectrontraj.thetaStartmax << "_Ekin" << commonelectrontraj.Ekin/1000. << "keV_" << "phi"<< commonelectrontraj.Startphi << "_" << ie << ".txt";
+			    	CompareFileName >> trajfilename;
+			    	commonelectrontraj.outfile.open(trajfilename.c_str(),ios::out);
+			    }
+			    else{	
+			    	sprintf(numstr1, "%d", (int)commonelectrontraj.Ekin/1000);
+			    	sprintf(numstr2, "%d", ie);
+			    	trajfilename="trajectories/particle";
+			    	trajfilename+=numstr2;
+			    	trajfilename+="_Ekin";
+			    	trajfilename+=numstr1;
+			    	trajfilename+="keV.txt";
+			    	trajfilename = commonelectrontraj.filepath + trajfilename;
+			    	commonelectrontraj.outfile.open(trajfilename.c_str());
+			   }
+			}
+					
+			//if you want a random phi, give it here to electrongeneration
+			//phidir=2.*PI*randomnumber();          // phi = polar angle
+
+			// Electron generator:
+			electrongeneration(x,v,commonelectrontraj.Startphi);            // sets initial condition for x and v, also phi setable
+		
+
+			/////////////////////////////////////////////////
+			// write out first point/starting point to file before going into traj1
+        		magfieldtraj(x,B,commonelectrontraj.filepath);                      // Calculate B-field
+			// v x B
+			CrossP[1] = B[3]*v[2] - B[2]*v[3];
+			CrossP[2] = -B[3]*v[1] + B[1]*v[3];
+			CrossP[3] = B[2]*v[1] - B[1]*v[2];
+			CrossPL = sqrt(CrossP[1]*CrossP[1] + CrossP[2]*CrossP[2] + CrossP[3]*CrossP[3]);
+			if(CrossPL == 0.){
+				for(int i=1;i<=3;i++){GuidX[i] = x[i];}
+			}
+			else{
+				for(int i=1;i<=3;i++){GuidX[i] = x[i] - CrossP[i]/CrossPL * StartgyraR;};
+			}
+			
+			magfieldtraj(GuidX,GuidB,commonelectrontraj.filepath);
+
+			// write out FIRST POINT traj info
+		     	if(commonelectrontraj.typeprint==1){        
+        		    // spatial coordinats x[i] of the particle [m]
+        		    commonelectrontraj.outfile << x[1] << "\t" << x[2] << "\t" << x[3] << "\t";
+        		    // velocity of the particle [m/s]
+        		    commonelectrontraj.outfile << v[1] << "\t" << v[2] << "\t" << v[3] << "\t";
+			    //magnetic field at particle position
+        		    commonelectrontraj.outfile << B[1] << "\t" << B[2] << "\t" << B[3] << "\t";
+			    // guiding center
+			    commonelectrontraj.outfile << GuidX[1] << "\t" << GuidX[2] << "\t" << GuidX[3] << "\t";
+			    // Bfield at guid center
+			    commonelectrontraj.outfile << GuidB[1] << "\t" << GuidB[2] << "\t" << GuidB[3] << "\t";
+			    // rest of info
+			    commonelectrontraj.outfile << commontrajexact.Ekin << setw(16) <<  scientific << 0. << setw(16) << commonelectrontraj.Time << setw(16) << 0. << setw(16) << 0. << endl;
+        		}
+		
+			// Trajectory calculation:
+			trajelectron1(x,v,electronindex);
+			
+			// Writing further in the CONCLUSION FILE at the end: MS index, energy error, storage time
+			outfile << "\t" << electronindex << "\t" << commonelectrontraj.Errenergy << "\t" << commonelectrontraj.Time << endl;
+			outfile.close();
+			
+			// Detailed tracking writing: close file
+			if(commonelectrontraj.typeprint==1)commonelectrontraj.outfile.close();
+		
+		}  // end of  electron loop
+
+	} // Compare with blines if end
+
+
+	if( commonelectrontraj.MonteCarlo ){
+
+			//if you want a random phi, give it here to electrongeneration
+			//phidir=2.*PI*randomnumber();          // phi = polar angle
+			
+			// Electron generator:
+			electrongeneration(x,v,commonelectrontraj.Startphi);            // sets initial condition for x and v, also phi setable
+			
+			// Trajectory calculation:
+			trajelectron1(x,v,electronindex);
+
+			// trajelectron doesnt write out anything -> now write out last point into the right file
+			
+			OutStream << x[1] << "\t" << x[2] << "\t" << x[3] << "\t" << v[1] << "\t" << v[2] << "\t" << v[3] << "\t" << commontrajexact.Ekin;
+
+	}
+
+
+	// COMPARE WITH G4
+	if( commonelectrontraj.G4Compare ){
+		
+		outfile.open(conclusionfilename.c_str(),ios::app);
+
+		// Particle loop:
+		for(ie=1;ie<=N;ie++){
+			
+			////////   Writing in CONCLUSION FILE at the start  /////////////////// only for compare with Blines
+		        outfile << commonelectrontraj.ApertGridX << "\t" << commonelectrontraj.ApertGridY;
 		        outfile << "\t" << commonelectrontraj.thetaStartmax << "\t" << commonelectrontraj.Ekin;
 			outfile << "\t" << commonelectrontraj.Startphi << "\t" << ie;
-		}
-		else{
-		        outfile << commonelectrontraj.Ekin << "\t" << ie;
-		}
+			
+		
+		
+			// Detailed tracking filename: definieing the path and the filename, dependent on CompareWBlines
+			if(commonelectrontraj.typeprint==1){
+			    if( commonelectrontraj.G4Compare ) {
+			    	CompareFileName << commonelectrontraj.filepath << "trajectories/" << "X" << commonelectrontraj.ApertGridX << "_Y" << commonelectrontraj.ApertGridY;
+			    	CompareFileName << "_th" << commonelectrontraj.thetaStartmax << "_Ekin" << commonelectrontraj.Ekin/1000. << "keV_" << "phi"<< commonelectrontraj.Startphi << "_" << ie << ".txt";
+			    	CompareFileName >> trajfilename;
+			    	commonelectrontraj.outfile.open(trajfilename.c_str(),ios::out);
+			    }
+			    else{	
+			    	sprintf(numstr1, "%d", (int)commonelectrontraj.Ekin/1000);
+			    	sprintf(numstr2, "%d", ie);
+			    	trajfilename="trajectories/particle";
+			    	trajfilename+=numstr2;
+			    	trajfilename+="_Ekin";
+			    	trajfilename+=numstr1;
+			    	trajfilename+="keV.txt";
+			    	trajfilename = commonelectrontraj.filepath + trajfilename;
+			    	commonelectrontraj.outfile.open(trajfilename.c_str());
+			   }
+			}
+					
+			
+			// instead of electron generator, where vector is hardcoded to B-field, we define x and v outside here
+			// Electron generator:
+			//electrongeneration(x,v,commonelectrontraj.Startphi);            // sets initial condition for x and v, also phi setable
+			x[1] = 0.;
+			x[2] = 0.;
+			x[3] = 1.;
+			velocity(x,commonelectrontraj.Ekin,cos(commonelectrontraj.thetaStartmax),commonelectrontraj.Startphi,v); // x is used here for normal vector
+			
+			x[1] = commonelectrontraj.Xstart;
+			x[2] = commonelectrontraj.Ystart;
+			x[3] = commonelectrontraj.Zstart;
+
+
+			/////////////////////////////////////////////////
+			// write out first point/starting point to file before going into traj1
+        		magfieldtraj(x,B,commonelectrontraj.filepath);                      // Calculate B-field
+			// v x B
+			CrossP[1] = B[3]*v[2] - B[2]*v[3];
+			CrossP[2] = -B[3]*v[1] + B[1]*v[3];
+			CrossP[3] = B[2]*v[1] - B[1]*v[2];
+			CrossPL = sqrt(CrossP[1]*CrossP[1] + CrossP[2]*CrossP[2] + CrossP[3]*CrossP[3]);
+			if(CrossPL < 1.e-12 ){
+				for(int i=1;i<=3;i++){GuidX[i] = x[i];}
+			}
+			else{
+				for(int i=1;i<=3;i++){GuidX[i] = x[i] - CrossP[i]/CrossPL * StartgyraR;};
+			}
+			
+			magfieldtraj(GuidX,GuidB,commonelectrontraj.filepath);
+
+			// write out FIRST POINT traj info
+		     	if(commonelectrontraj.typeprint==1){        
+        		    // spatial coordinats x[i] of the particle [m]
+        		    commonelectrontraj.outfile << x[1] << "\t" << x[2] << "\t" << x[3] << "\t";
+        		    // velocity of the particle [m/s]
+        		    commonelectrontraj.outfile << v[1] << "\t" << v[2] << "\t" << v[3] << "\t";
+			    //magnetic field at particle position
+        		    commonelectrontraj.outfile << B[1] << "\t" << B[2] << "\t" << B[3] << "\t";
+			    // guiding center
+			    commonelectrontraj.outfile << GuidX[1] << "\t" << GuidX[2] << "\t" << GuidX[3] << "\t";
+			    // Bfield at guid center
+			    commonelectrontraj.outfile << GuidB[1] << "\t" << GuidB[2] << "\t" << GuidB[3] << "\t";
+			    // rest of info
+			    commonelectrontraj.outfile << commontrajexact.Ekin << setw(16) <<  scientific << 0. << setw(16) << commonelectrontraj.Time << setw(16) << 0. << setw(16) << 0. << endl;
+        		}
+		
+			// Trajectory calculation:
+			trajelectron1(x,v,electronindex);
+			
+			// Writing further in the CONCLUSION FILE at the end: MS index, energy error, storage time
+			outfile << "\t" << electronindex << "\t" << commonelectrontraj.Errenergy << "\t" << commonelectrontraj.Time << endl;
+			outfile.close();
+			
+			// Detailed tracking writing: close file
+			if(commonelectrontraj.typeprint==1)commonelectrontraj.outfile.close();
+		
+		}  // end of  electron loop
+
+	} // Compare with G4 if end
 	
-	
-		// Detailed tracking writing: definieing the path and the filename, dependent on CompareWBlines
-		if(commonelectrontraj.typeprint==1){
-		    if( commonelectrontraj.CompareWBlines ) {
-		    	CompareFileName << commonelectrontraj.filepath << "trajectories/" << "X" << commonelectrontraj.Xstart << "_Y" << commonelectrontraj.Ystart;
-		    	CompareFileName << "_th" << commonelectrontraj.thetaStartmax << "_Ekin" << commonelectrontraj.Ekin/1000. << "keV_" << "phi"<< commonelectrontraj.Startphi << "_" << ie << ".txt";
-		    	CompareFileName >> trajfilename;
-		    	commonelectrontraj.outfile.open(trajfilename.c_str(),ios::out);
-		    }
-		    else{	
-		    	sprintf(numstr1, "%d", (int)commonelectrontraj.Ekin/1000);
-		    	sprintf(numstr2, "%d", ie);
-		    	trajfilename="trajectories/particle";
-		    	trajfilename+=numstr2;
-		    	trajfilename+="_Ekin";
-		    	trajfilename+=numstr1;
-		    	trajfilename+="keV.txt";
-		    	trajfilename = commonelectrontraj.filepath + trajfilename;
-		    	commonelectrontraj.outfile.open(trajfilename.c_str());
-		   	}
-		}
-		
-		//now here, we set the correct Ystart,Xstart including R_1 and different starting pos for different phi around the guiding center, and apertYshift
-		commonelectrontraj.Ystart = commonelectrontraj.Ystart + commonelectrontraj.R_1 + StartgyraR*cos(commonelectrontraj.Startphi) + apertYshift;
-		commonelectrontraj.Xstart = commonelectrontraj.Xstart - StartgyraR*sin(commonelectrontraj.Startphi) + apertXshift;
-    		
-		//if you want a random phi, give it here to electrongeneration
-		//phidir=2.*PI*randomnumber();          // phi = polar angle
-
-		// Electron generator:
-		electrongeneration(x,v,commonelectrontraj.Startphi);            // sets initial condition for x and v, also phi setable
-	
-
-		/////////////////////////////////////////////////
-		// write out first point/starting point to file before going into traj1
-        	magfieldtraj(x,B,commonelectrontraj.filepath);                      // Calculate B-field
-		// v x B
-		CrossP[1] = B[3]*v[2] - B[2]*v[3];
-		CrossP[2] = -B[3]*v[1] + B[1]*v[3];
-		CrossP[3] = B[2]*v[1] - B[1]*v[2];
-		CrossPL = sqrt(CrossP[1]*CrossP[1] + CrossP[2]*CrossP[2] + CrossP[3]*CrossP[3]);
-		if(CrossPL == 0.){
-			for(int i=1;i<=3;i++){GuidX[i] = x[i];}
-		}
-		else{
-			for(int i=1;i<=3;i++){GuidX[i] = x[i] - CrossP[i]/CrossPL * StartgyraR;};
-		}
-		
-		magfieldtraj(GuidX,GuidB,commonelectrontraj.filepath);
-
-		// write out FIRST POINT traj info
-	     	if(commonelectrontraj.typeprint==1){        
-        	    // spatial coordinats x[i] of the particle [m]
-        	    commonelectrontraj.outfile << x[1] << "\t" << x[2] << "\t" << x[3] << "\t";
-        	    // velocity of the particle [m/s]
-        	    commonelectrontraj.outfile << v[1] << "\t" << v[2] << "\t" << v[3] << "\t";
-		    //magnetic field at particle position
-        	    commonelectrontraj.outfile << B[1] << "\t" << B[2] << "\t" << B[3] << "\t";
-		    // guiding center
-		    commonelectrontraj.outfile << GuidX[1] << "\t" << GuidX[2] << "\t" << GuidX[3] << "\t";
-		    // Bfield at guid center
-		    commonelectrontraj.outfile << GuidB[1] << "\t" << GuidB[2] << "\t" << GuidB[3] << "\t";
-		    // rest of info
-		    commonelectrontraj.outfile << commontrajexact.Ekin << setw(16) <<  scientific << 0. << setw(16) << commonelectrontraj.Time << setw(16) << 0. << setw(16) << 0. << endl;
-        	}
-		
 
 
-		// Trajectory calculation:
-		trajelectron1(x,v,electronindex);
-		
-		// Writing further in the CONCLUSION FILE at the end: MS index, energy error, storage time
-		outfile << "\t" << electronindex << "\t" << commonelectrontraj.Errenergy << "\t" << commonelectrontraj.Time << endl;
-		outfile.close();
-		
-		// Detailed tracking writing: close file
-		if(commonelectrontraj.typeprint==1)commonelectrontraj.outfile.close();
-	}  // end of  electron loop
-	
 	return;
 }
 
 //////////////////////////////////////////////////////////
+
+
 
 void trajelectron1(double *x, double *v, int& electronindex){
 // Trajectory calculation of 1 electron, with exact electron motion.
@@ -363,7 +481,7 @@ Units:
     V=beta*c;                       // calculate the magnitute of the particl velocity [m/s]
     // Calc. of unit vectors na, nb (orthogonal to n):
     xz=sqrt(n[1]*n[1]+n[3]*n[3]);   // magnitude of the projection of the B-field's unity vector on the xz plane
-    if(xz>1.e-12){na[1]=-n[3]/xz; na[2]=0.; na[3]=n[1]/xz;} // creat a unit vector perpenticular to the project y simply rotate the vector in the xy plane and renormalize
+    if(xz>1.e-12){na[1]=n[3]/xz; na[2]=0.; na[3]=n[1]/xz;} // creat a unit vector perpenticular to the project y simply rotate the vector in the xy plane and renormalize
     else{na[1]=1.; na[2]=0.; na[3]=0.;}   // if xy is to small than the B-field points approximatly in the y-direction
     // Calculating nb = n x na (cross/vector product)
     nb[1]=n[2]*na[3]-n[3]*na[2];
@@ -388,12 +506,12 @@ void electronstart(double Start_cord[4],double r,double costheta,double phidir,d
     double mz,mr,L,nr,vlong,vtrans;
   double phispec,cosphi,sinphi,kin_energy;
     // used variables
-    double phi,B[4],b, n[4];
+    double B[4],b, n[4];
     int k;
     // Spatial coordinates of the Starting point, random phi angle on the DISK!
-    phi=2.*PI*randomnumber();
-    x[1]=r*cos(phi)+Start_cord[1];
-    x[2]=r*sin(phi)+Start_cord[2];
+    //phi=2.*PI*randomnumber();
+    x[1]=Start_cord[1];
+    x[2]=Start_cord[2];
     x[3]=Start_cord[3];
     // Calculate the B-field in the Starting point
     magfieldtraj(x,B,commonelectrontraj.filepath);
@@ -420,7 +538,7 @@ void electrongeneration(double *x,double *v, double phidir){       // generating
     r=commonelectrontraj.Rstartmax*sqrt(randomnumber());
     // Direction of the emitted particle:
     if(commonelectrontraj.theta_fix == 0)costheta=1.-(1.-cos(commonelectrontraj.thetaStartmax))*randomnumber();   // theta = angle between z-axis and particle direction
-    else costheta=1.-(1.-cos(commonelectrontraj.thetaStartmax));
+    else costheta= cos(commonelectrontraj.thetaStartmax);
     // define particle energy
     Ekin=commonelectrontraj.Ekin;
     // calculate the actual start position and velocity vector

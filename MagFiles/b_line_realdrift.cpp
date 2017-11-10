@@ -194,27 +194,23 @@ void b_line_real(double R_1,double alpha,  double start_posZ, int horilines, int
 					n[3] = n[3]/n_length;
 
 					// 1st perpend vec, pointing to curv center
-					n_old[1] = (planevec[2]*B_old[3] - planevec[3]*B_old[2])/b_old;
-					n_old[2] = (planevec[3]*B_old[1] - planevec[1]*B_old[3])/b_old;
-					n_old[3] = (planevec[1]*B_old[2] - planevec[2]*B_old[1])/b_old;
+					n_old[1] = (planevec[2]*B_old[3] - planevec[3]*B_old[2]);
+					n_old[2] = (planevec[3]*B_old[1] - planevec[1]*B_old[3]);
+					n_old[3] = (planevec[1]*B_old[2] - planevec[2]*B_old[1]);
 					n_old_length = sqrt( n_old[1]*n_old[1] + n_old[2]*n_old[2] + n_old[3]*n_old[3] );
-					n_old[1] = n_old[1]*n_old_length;
-					n_old[2] = n_old[2]*n_old_length;
-					n_old[3] = n_old[3]*n_old_length;
+					n_old[1] = n_old[1]/n_old_length;
+					n_old[2] = n_old[2]/n_old_length;
+					n_old[3] = n_old[3]/n_old_length;
 
 					// for 1st ORDER, we dont actually need R, but only the angle between the 2 perpend. vectors
 					angle = acos( n[1]*n_old[1] + n[2]*n_old[2] + n[3]*n_old[3] );
 
-					
-					if( driftOn == 1 ){
-
-						v_drift = (double)driftdir*momentum*1000./c/b_old *angle  *(cos(thetaEm)+1./cos(thetaEm))/2.;
+					v_drift = (double)driftdir*momentum*1000./c/b_old *angle  *(cos(thetaEm)+1./cos(thetaEm))/2.;
 	
-						P[1] += planevec[1]*v_drift;
-						P[2] += planevec[2]*v_drift;
-						P[3] += planevec[3]*v_drift;
-					}
-
+					P[1] += planevec[1]*v_drift;
+					P[2] += planevec[2]*v_drift;
+					P[3] += planevec[3]*v_drift;
+				
 
 					if ( driftOn == 2 ){
 
@@ -230,15 +226,12 @@ void b_line_real(double R_1,double alpha,  double start_posZ, int horilines, int
 	
 							// now calculate RxB drift velocity 
 							// we use here the velocity formula for the drift calc, and we add them with planevec
-							v_drift = (double)driftdir*momentum*1000./c/b_old *step_size/R_curve  *(cos(thetaEm)+1./cos(thetaEm))/2.;
+							v_drift = momentum*1000.*momentum*1000./c/c/b_old/b_old *step_size/R_curve  *(1.-sin(thetaEm)*sin(thetaEm)/2.);
 	
-							P[1] += planevec[1]*v_drift;
-							P[2] += planevec[2]*v_drift;
-							P[3] += planevec[3]*v_drift;
+							P[1] += -n_old[1]*v_drift;
+							P[2] += -n_old[2]*v_drift;
+							P[3] += -n_old[3]*v_drift;
 	
-						}
-						else {
-							R_curve = 1000.; // maximum radius chosen
 						}
 					} // 2nd drift close
 				} // if curvature

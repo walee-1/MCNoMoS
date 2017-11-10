@@ -31,6 +31,7 @@ if [ -d "$FULLPATH" ] ;
 		cd $CONFIGPATH
 		./mainmagJ $FULLPATH $CONFIG
 		mkdir $FULLPATH"trajectories"
+		mkdir $FULLPATH"MonteCarlo"
 		./Maintraj $FULLPATH $CONFIG
 fi
 #
