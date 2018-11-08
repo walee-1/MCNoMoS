@@ -182,7 +182,7 @@ void klothoid_coils_to_inputcoil_dat(double *coil_current, int i_coil, double *s
 
 
 
-void PERC_coils_to_inputcoil_dat(double *starting_point, double *direction,double global_scale,double sol_scale,double filter_scale, string filedir, string filename, int Perc_coordinatsystem){
+void PERC_coils_to_inputcoil_dat(double *starting_point, double *direction,double global_scale,double sol_scale,double filter_scale,double connec_scale, string filedir, string filename, int Perc_coordinatsystem){
     // Perc Parameterrs:
 int Perc_N = 13;                         // number of coils in Perc
 string Perc_text_name = filedir + "Perc_coils_2.txt";     // path to store the Perccoil configuration with the PERC's end in the origin and the PERC orientation
@@ -253,7 +253,7 @@ string Perc_text_name = filedir + "Perc_coils_2.txt";     // path to store the P
     double Perc_Connector_length = 0.9965;          // length of the Connector [m]
     double Perc_Connector_radius = 0.250;              // inner radius of the Connector [m]
     double Perc_Connector_thickness = 0.0195;        // coil thickness of the Connector [m]
-    double Perc_Connector_j = 560./Perc_Connector_length/Perc_Connector_thickness*2220.8*global_scale;   // current density of the Connector to reach B2=0,5-1 T [A/m²]
+    double Perc_Connector_j = 560./Perc_Connector_length/Perc_Connector_thickness*2220.8*global_scale*connec_scale;   // current density of the Connector to reach B2=0,5-1 T [A/m²]
     double Perc_Connector_center = 2.6825;
 
 // save the coil configuration in a text file
