@@ -31,7 +31,7 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 
 	
 	// Adjustable:
-	double step_size = 5.e-3;  // point distance in [m]
+	double step_size = 5.e-4;  // point distance in [m]
 	int n_loops = 10;         // number of loops, when values are written
 	int i_loop;	
 
@@ -129,9 +129,7 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 		angle =0.;
 		i_loop = n_loops;   // loop counter, final value at beginning so that first point is definitely written 
 		// calculate B-field values at every step on the cut line:
-		bool atDet;
-		if(NoMoSOn == true) atDet = P[2] < 0. && P[3] < detposZ;
-		else atDet = P[3] > detposZ;
+		bool atDet= false;
 		while ( !atDet ) {
 			
 			// calculating the B-field
@@ -165,9 +163,8 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 			P[2] += B[2]/b*step_size;
 			P[3] += B[3]/b*step_size;
 
-			//cout << "BlineBUG: nextP = " << P[1] << "\t" << P[2] << "\t" << P[3] << endl;
-
 			// Detector break! //////////////////
+			if ( P[3] <= detposZ && P[2] < 0) atDet = true;
 			if( atDet ) {cout << "BLINE: finished at Detector" << endl;}
 
 			//if P[3] gets over det positions, while loop is finished and last point will not be written away -> manual write away last point before that
@@ -197,9 +194,6 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 				planevec[2] = (B_old[3]*B[1] - B_old[1]*B[3]);
 				planevec[3] = (B_old[1]*B[2] - B_old[2]*B[1]);
 				planevec_length = sqrt( planevec[1]*planevec[1] + planevec[2]*planevec[2] + planevec[3]*planevec[3] );
-				planevec[1] = planevec[1]/planevec_length;
-				planevec[2] = planevec[2]/planevec_length;
-				planevec[3] = planevec[3]/planevec_length;
 	
 				// if plane vec is very close to ZERO, B and B_old are parallel -> no curvature
 				if (  planevec_length > 1.e-9 ){
@@ -225,11 +219,11 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 					// for 1st ORDER, we dont actually need R, but only the angle between the 2 perpend. vectors
 					angle = acos( n[1]*n_old[1] + n[2]*n_old[2] + n[3]*n_old[3] );
                     
-                    // now calc the NON normed RxB vector for the drift distance with normed R vector (-n_old) and B not normed -> additional 1/B in drift1st
-                    // minus because n_old points towards center, R away from center
-                    RxB_vec[1] = -(n_old[2]*B_old[3] - n_old[3]*B_old[2]);
-                    RxB_vec[2] = -(n_old[3]*B_old[1] - n_old[1]*B_old[3]);
-                    RxB_vec[3] = -(n_old[1]*B_old[2] - n_old[2]*B_old[1]);
+		                        // now calc the NON normed RxB vector for the drift distance with normed R vector (-n_old) and B not normed -> additional 1/B in drift1st
+		                        // minus because n_old points towards center, R away from center
+		                        RxB_vec[1] = -(n_old[2]*B_old[3] - n_old[3]*B_old[2]);
+		                        RxB_vec[2] = -(n_old[3]*B_old[1] - n_old[1]*B_old[3]);
+		                        RxB_vec[3] = -(n_old[1]*B_old[2] - n_old[2]*B_old[1]);
 
 					drift1st = (double)driftdir*momentum*1000./c/b_old/b_old *angle  * ffactor(localtheta(thetaEm, startB, b_old));
 					//cout << "BLINEBUG P_old[3] = " << P_old[3] << endl;
@@ -238,15 +232,15 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 					// this is now point B'
 					P[1] += RxB_vec[1]*drift1st;
 					P[2] += RxB_vec[2]*drift1st;
-                    P[3] += RxB_vec[3]*drift1st;
+		                        P[3] += RxB_vec[3]*drift1st;
 				
 					
 					// 2nd Order needs R at point A and B' 
 					if ( driftOn == 2 ){
 
-                        // Bfield of B'
-                        magfield_elliptic(P,B,filedir);
-                        b = sqrt( B[1]*B[1] + B[2]*B[2] + B[3]*B[3] );
+                        			// Bfield of B'
+                        			magfield_elliptic(P,B,filedir);
+                        			b = sqrt( B[1]*B[1] + B[2]*B[2] + B[3]*B[3] );
                         
 						// calc R_A
 						//here we have to build in a security measure because if denominator is close to equal, R_curve -> Infinity -> v_1st to ZERO
@@ -259,8 +253,8 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 							//cout << "B-LINE BUG: R_A = " << R_A << endl;
 	
 							// now calculate RxB drift velocity for point A
-                            // m_e is missing here because it cancels out with outer factor of D2nd as well as gamma
-                            // we devide by 2 b_old because one time from Nenner and one time from cross product where we didn't used a normed B vector
+			                            // m_e is missing here because it cancels out with outer factor of D2nd as well as gamma
+			                            // we devide by 2 b_old because one time from Nenner and one time from cross product where we didn't used a normed B vector
 							v1st_A = (double)driftdir*momentum*1000.*momentum*1000./b_old/b_old/R_A/c/c *cos(localtheta(thetaEm, startB, b_old)) *ffactor(localtheta(thetaEm, startB, b_old));
 							//cout << "BLINE BUG: v1st_A = " << v1st_A << endl;
 						} // the direction of this drift velocity is still planevec, so don't overwrite
@@ -346,11 +340,11 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 							//cout << "v1st_B = " << v1st_B << endl;
 						}
                         
-                        // now we need to calc the RxB cross product with normalized R and not normalized Bs for v1st_A and v1st_B
-                        // we use diff_vec here first for v1st_B and substract then 2nd term
-                        diff_vec[1] = v1st_B*RxB_vec_new[1];
-                        diff_vec[2] = v1st_B*RxB_vec_new[2];
-                        diff_vec[3] = v1st_B*RxB_vec_new[3];
+			                        // now we need to calc the RxB cross product with normalized R and not normalized Bs for v1st_A and v1st_B
+			                        // we use diff_vec here first for v1st_B and substract then 2nd term
+			                        diff_vec[1] = v1st_B*RxB_vec_new[1];
+			                        diff_vec[2] = v1st_B*RxB_vec_new[2];
+			                        diff_vec[3] = v1st_B*RxB_vec_new[3];
                         
                         
 						// now we can calculate B'' from B' from 2nd Order Drift DISTANCE
@@ -366,7 +360,7 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 						
 						
 						// and now add the full 2nd Order drift to point B' to get B''
-                        // division by /c/c already happened in v1st and gamma and me were left out because they cancel
+       				                 // division by /c/c already happened in v1st and gamma and me were left out because they cancel
 						P[1] += (double)driftdir*diff_vec[1]/b_old;
 						P[2] += (double)driftdir*diff_vec[2]/b_old;
 						P[3] += (double)driftdir*diff_vec[3]/b_old;
