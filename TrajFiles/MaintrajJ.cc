@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <string>
 #include <sstream>                      // for stringstream
+#include <random>
 
 using namespace std;
 
@@ -27,14 +28,17 @@ using namespace std;
 
 int main(int argc, char ** argv, char* envp[])
 {
-	int N,iEkin, iRandom, esteps;
+    
+    double EfromP(double);
+    
+	int N,iEkin, iRandom, psteps;
 	string conclusionfilename;
 	char numstr1[21],numstr2[21];
-	double emin, emax, estep;
+	double pmin, pmax, pstep;
 	int horilines, vertilines;
 	double ApertX, ApertY;
 	ofstream ConclusionHeader;
-	double PercEnd_ILLDV;
+	double StartZ;
 
 ////////////////////// Input tests //////////////////////
 
@@ -53,6 +57,7 @@ int main(int argc, char ** argv, char* envp[])
 	//  Simulation parameters:
 	commonelectrontraj.filepath = filedir; 
 	commonelectrontraj.PercOn =myconfig.pBool("PercOn");
+	commonelectrontraj.NoMoSOn = myconfig.pBool("NoMoSOn");
 	commonelectrontraj.CompareWBlines = myconfig.pBool("CompareWBlines");
 	commonelectrontraj.MonteCarlo = myconfig.pBool("MonteCarloData");
 	commonelectrontraj.G4Compare = myconfig.pBool("G4Compare");
@@ -60,37 +65,61 @@ int main(int argc, char ** argv, char* envp[])
 	N = myconfig.pInt("ParticleN");
 	double apertYshift = myconfig.pDouble("apertYshift");
 	double apertXshift = myconfig.pDouble("apertXshift");
+	bool onlyCornerCenter = myconfig.pBool("onlyCornerCenter");
 	horilines = myconfig.pInt("horilines");
 	vertilines = myconfig.pInt("vertilines");
 	ApertX = myconfig.pDouble("ApertX");
 	ApertY = myconfig.pDouble("ApertY");
 	double detpos = myconfig.pDouble("detpos");
-    	double xstep;
-        
-	if( horilines == 1 ){
-		xstep = 0.;
+	
+	int lines;
+	if(onlyCornerCenter == true) lines =5;
+	else lines = horilines*vertilines;
+
+	double startP[2][lines];
+	ofstream OutStream[lines];
+    	stringstream OutStringStream;
+	int counter = 0;
+
+	// here we set starting points. differentiation if onlyCornerCenter == True
+	if( onlyCornerCenter == true){
+		//first the center point
+		startP[0][counter] = 0.; startP[1][counter] = 0.;
+		counter++;
+		
+		for(int x=-1; x <2; x=x+2){
+			for(int y=-1; y<2; y=y+2){
+				startP[0][counter]=x*ApertX/2.;
+				startP[1][counter]=y*ApertY/2.;
+				counter ++;
+			}
+		}
+		cout << "TRAJBUG: startPs" << endl;
+		for(int i=0;i<5;i++) cout << startP[0][i] << "\t" << startP[1][i] << endl;
 	}
 	else{
-		xstep = ApertX/(double)(horilines-1);
-	}
-    	double ystep;
-        if( vertilines == 1 ){
-		ystep = 0.;
-	}
-	else{ ystep = ApertY/(double)(vertilines-1);}
+    		double xstep;
+		if( horilines == 1 ){
+			xstep = 0.;
+		}
+		else{
+			xstep = ApertX/(double)(horilines-1);
+		}
+    		double ystep;
+        	if( vertilines == 1 ){
+			ystep = 0.;
+		}
+		else{ ystep = ApertY/(double)(vertilines-1);}
 
-    	double startP[2][horilines*vertilines];
-    	int counter =0;
-	ofstream OutStream[horilines*vertilines];
-    	stringstream OutStringStream;
-    	// define start points dependent on apertsize and hori/verti-lines. NOT REAL COORDS. because we use these for the file names!
-    	for(int x=1;x<=horilines; x++){
-    	    for(int y=1;y<=vertilines; y++){
-    	        startP[0][counter]= -ApertX/2. + (x-1)*xstep;
-    	        startP[1][counter]= -ApertY/2. + (y-1)*ystep;
-    	        counter++;
-    	    }
-    	}
+    		// define start points dependent on apertsize and hori/verti-lines. NOT REAL COORDS. because we use these for the file names!
+    		for(int x=1;x<=horilines; x++){
+    		    for(int y=1;y<=vertilines; y++){
+    		        startP[0][counter]= -ApertX/2. + (x-1)*xstep;
+    		        startP[1][counter]= -ApertY/2. + (y-1)*ystep;
+    		        counter++;
+    		    }
+    		}
+	}
 
 
 	// read in info file from sim so R1 is read in!
@@ -100,7 +129,7 @@ int main(int argc, char ** argv, char* envp[])
 	double R_1;
 	infofile >> infoname >> R_1;
 	cout << "TRAJ: Read-in R_1 = " << R_1 << endl;
-	infofile >> infoname >> PercEnd_ILLDV;
+	infofile >> infoname >> StartZ;
 	infofile.close();
 	commonelectrontraj.R_1=R_1;
 	
@@ -111,19 +140,18 @@ int main(int argc, char ** argv, char* envp[])
 	// Particle properties:
 	// Electron charge and mass:
 	if ( particle == "e" ){
-		CHARGE=-1.602177e-19;   // electron charge (in SI, with sign) [C]
-		MASS=9.109389e-31;      // electron mass (in SI) [kg]
+		CHARGE=-1.6021766e-19;   // electron charge (in SI, with sign) [C]
+		MASS=9.1093836e-31;      // electron mass (in SI) [kg]
 	}
 	else{
-		CHARGE=1.602177e-19;   // electron charge (in SI, with sign) [C]
+		CHARGE=1.6021766e-19;   // electron charge (in SI, with sign) [C]
 		MASS=1.672621e-27;      // electron mass (in SI) [kg]
 	}
 
 
 	// Start conditions:
 	// Starting position (x,y,z) in [m]:
-	if(commonelectrontraj.PercOn == 0) commonelectrontraj.Zstart= PercEnd_ILLDV;
-	else commonelectrontraj.Zstart = PercEnd_ILLDV - (2.6825+0.9965/2.) - 4.; // calc center of DV of PERC. currently read-in end of NoMoS with fixed values from inputcoilcreate
+	commonelectrontraj.Zstart= StartZ;
 	cout << "TRAJ: Zstart = " << commonelectrontraj.Zstart << endl;
 	
 	// Detector conditions
@@ -133,7 +161,7 @@ int main(int argc, char ** argv, char* envp[])
 	// Simulation settings
 	commontrajexact.typeh=2;            // automatic timestep computation
 	commontrajexact.typerungekutta=8;   // typerungekutta=4: rungekutta4;
-	commontrajexact.slimit=0.050;       // pathlength limit for 1 RK-step (m)
+	commontrajexact.slimit=5.e-4;       // pathlength limit for 1 RK-step (m)
 	commontrajexact.ntimestep=40;       // RK-step control by cyclotron period
 	commonelectrontraj.numstepmax=100000000;  // maximal number of Runge-Kutta steps
 	commonelectrontraj.Timemax=30.e-3;  // Maximal time [s]
@@ -141,7 +169,21 @@ int main(int argc, char ** argv, char* envp[])
 	facB=1.;        // scaling factor for magnetic field (1 = turned on)
 	facE=0.;        // scaling factor for electric field (0 = turned off)
 	
-
+	//load earth magnetic field vector from config file, variables are initialized in fieldnew.cpp, and also used there in the function magfieldtraj()
+	// numbers in config in micro tesla!!!
+	earth_Bx = myconfig.pDouble("earth_BN");
+	earth_By = myconfig.pDouble("earth_BE");
+	earth_Bz = myconfig.pDouble("earth_Bvert");
+	// we turn around the coordinates of the earth magnetic field dependent on ILL OR PERC
+	if( !commonelectrontraj.PercOn ){ //ILL
+		earth_Bx = -earth_Bx/sqrt(2.) - earth_By/sqrt(2.);
+		earth_By = -earth_Bx/sqrt(2.) + earth_By/sqrt(2.);
+	}
+	else{
+		earth_Bx = -earth_Bx/sqrt(2.) + earth_By/sqrt(2.);
+		earth_By = -earth_Bz;
+		earth_Bz = earth_Bx/sqrt(2.) + earth_By/sqrt(2.);
+	}
     
 
 ////////////// trajectory calcs	///////////////////////////////////
@@ -175,10 +217,10 @@ int main(int argc, char ** argv, char* envp[])
 		// Radius of starting disk in [m]:
 		commonelectrontraj.Rstartmax=0.000001;
 	
-		emin = myconfig.pDouble("EMIN");
-		emax = myconfig.pDouble("EMAX");
-		estep = myconfig.pDouble("ESTEP");
-		esteps = (emax - emin)/estep;
+		pmin = myconfig.pDouble("PMIN");
+		pmax = myconfig.pDouble("PMAX");
+		pstep = myconfig.pDouble("PSTEP");
+		psteps = (pmax - pmin)/pstep;
 
 		double thetastep = myconfig.pDouble("thetastep")/180.*M_PI;
 		double thetamax = myconfig.pDouble("thetamax")/180.*M_PI;
@@ -198,7 +240,7 @@ int main(int argc, char ** argv, char* envp[])
 
 		
 		//loop for different start points
-		for( int line = 0; line < horilines*vertilines; line++){
+		for( int line = 0; line < lines; line++){
 			cout << endl << "TRAJ: line: " << line+1 << endl;
 	
 			commonelectrontraj.ApertGridX=startP[0][line];
@@ -210,10 +252,10 @@ int main(int argc, char ** argv, char* envp[])
 				commonelectrontraj.thetaStartmax = angle_i*thetastep;
 				cout << endl << "TRAJ: theta= " << commonelectrontraj.thetaStartmax/M_PI*180. << endl;
 				// energy variation
-				for(int E_i=0; E_i<=esteps; E_i++){
+				for(int P_i=0; P_i<=psteps; P_i++){
 					// again set X and Y start, so that in E loop, Y is again correct after applying gyro in previous step
-					commonelectrontraj.Ekin = emin*1000. + E_i*estep*1000.;
-					cout << endl << "TRAJ: E= " << commonelectrontraj.Ekin << endl;
+					commonelectrontraj.Ekin = EfromP( pmin*1000. + P_i*pstep*1000. );
+					cout << endl << "TRAJ: P= " << pmin*1000. + P_i*pstep*1000. << " (E=" << commonelectrontraj.Ekin << ")" << endl;
 
 					for(int phi_i=0; phi_i<=phisteps; phi_i++){
 
@@ -227,7 +269,7 @@ int main(int argc, char ** argv, char* envp[])
 						GuidStart[1] = commonelectrontraj.Xstart;
 						GuidStart[2] = commonelectrontraj.Ystart;
 						GuidStart[3] = commonelectrontraj.Zstart;
-						magfield_elliptic(GuidStart,B,filedir);
+						magfieldtraj(GuidStart,B,filedir);
  				                b=sqrt(B[1]*B[1]+B[2]*B[2]+B[3]*B[3]);
 						//calc unit vector to define direction for the velocity calc, in B direction
 						n[1] = B[1]/b;
@@ -252,7 +294,6 @@ int main(int argc, char ** argv, char* envp[])
 							n[1] /= n_length;
 							n[2] /= n_length;
 							n[3] /= n_length;
-							cout << "TRAJ BUG: check direction for offset-calc : "<< n[1] << "\t" << n[2] << "\t" << n[3] << endl;
 
 							commonelectrontraj.Xstart -= n[1]*StartgyraR;
 							commonelectrontraj.Ystart -= n[2]*StartgyraR;
@@ -279,10 +320,118 @@ int main(int argc, char ** argv, char* envp[])
     
         cout << endl << "TRAJ: MonteCarlo Data" << endl << endl;
         counter = 0;
-	int hemisphere;
+	commonelectrontraj.hemisphere = 1;
+	commonelectrontraj.aperture =1;
+	OutStringStream.str("");
+	ofstream MonteCarloOut;
+        double buffer1, buffer2, buffer3;
+	stringstream filenr;
+	//we save the aperture size to one existing global value to have it in Traj.cc
+	commonelectrontraj.ApertGridX = ApertX;
+	commonelectrontraj.ApertGridY = ApertY;
+
+	double ApertExpander = 0.017*4; // how much the aperture is assumed larger for starting positions
 	
+	//random number initialization
+	random_device r;
+	seed_seq seed{r(),r(),r(),r(),r(),r(),r(),r()};
+	mt19937 eng{seed};
+	uniform_real_distribution<double> dist(-1.,1.);
+
+	//
+	//
+
+	commonelectrontraj.theta_fix = 1;
+        commonelectrontraj.Rstartmax=0.000001;
+        commonelectrontraj.typeprint=0;
+	
+
+	//here we loop over the single partial files of the generated spectrum with increasing index
+        // read-in from MC
+        ifstream MonteCarloData;
+        string SpectraDir = "/home/dmoser/FerencSource+Spectra/Spectra1e7/";
+
+        string SpectraNr;
+      
+	// now we loop over the single files starting with 0
+	// or 1 in the mean while (first 10^5 is already done. now in single files!
+	for(int nr=2;nr<100;nr++){
+
+		filenr.str(""); // clearing the stringstream before each iteration
+		filenr << nr;
+		SpectraNr= "Spectra1e5_" + filenr.str() + "_filtered.txt";
+	        MonteCarloData.open( (SpectraDir+SpectraNr).c_str() ,ios::in);
+		cout << "MonteCarloBUG: Opened File = " << (SpectraDir+SpectraNr).c_str() << endl;
+	
+		// now make different output file for each 10^5 package
+		OutStringStream.str(""); // clearing
+		OutStringStream << commonelectrontraj.filepath << "MonteCarlo/"  << "DetectorData"+ filenr.str() +".txt";
+		conclusionfilename = OutStringStream.str(); // conclusionfilename is just reused here for opening the files
+		MonteCarloOut.open(conclusionfilename.c_str(),ios::app);
+		// Header
+		MonteCarloOut << "XStart" << "\t" << "YStart" << "\t" << "ZStart" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "vx" << "\t" << "vy" << "\t" << "vz" << "\t" << "Ekin" << "\t" << "hemi" <<"\t" << "apert" <<  endl;
+	
+
+	        while ( MonteCarloData.good() ){
+	    	    cout << endl << "TRAJ: Decay#: " << counter << endl;	    
+	    	    counter ++;
+	
+		    if ( particle == "e" ){ // if electron, take second part of data, else the first part for proton
+	            	MonteCarloData >> buffer1 >> buffer2 >> buffer3 >> commonelectrontraj.thetaStartmax >> commonelectrontraj.Startphi >> commonelectrontraj.Ekin;
+		    }
+		    else{
+	            	MonteCarloData >> commonelectrontraj.thetaStartmax >> commonelectrontraj.Startphi >> commonelectrontraj.Ekin >> buffer1 >> buffer2 >> buffer3 ;
+		    }
+	
+		    commonelectrontraj.hemisphere = 1;
+		    if( commonelectrontraj.thetaStartmax >= 90. ){
+			    commonelectrontraj.thetaStartmax = 180. - commonelectrontraj.thetaStartmax;
+			    commonelectrontraj.hemisphere = -1;
+		    }
+	
+		    // if theta is greater than 45°, filter will reflect -> cutoff
+		    if( commonelectrontraj.thetaStartmax < 45. ){
+		
+			commonelectrontraj.Startphi = commonelectrontraj.Startphi/180.*M_PI;
+			commonelectrontraj.thetaStartmax = commonelectrontraj.thetaStartmax /180. * M_PI;
+			commonelectrontraj.Ekin *=1000.; // from keV to eV!
+		   	
+
+			// now we still have to random variate the starting position, we choose a bigger window than the aperture to see the full edge effect
+				
+
+			commonelectrontraj.Ystart= commonelectrontraj.R_1 + apertYshift + (ApertY+ApertExpander)/2. * dist(eng); //dist(eng) gives numb between -1 and 1 for selection of aperture position
+			commonelectrontraj.Xstart= apertXshift+ (ApertX+ApertExpander)/2. * dist(eng); 
+			//Zstart left constant as defined in beginning of main, for now
+
+	           	trajelectronN(conclusionfilename,1,0., MonteCarloOut ); //filenam, N, startgyraR, apertYshift,apertXshift
+	
+		    }
+		    else cout << "MonteCarloBug: theta > 45" << endl;
+	            
+
+	        } //closing the while loop
+	
+		MonteCarloOut.close();
+		MonteCarloData.close();
+
+	}// for loop closing of single monte carlo files
+
+		//dont forget to close the file streams
+		//
+		//
+
+    }//closing monte carlo simulations
+
+
+
+
+/////////////////////////////////
+//we comment out the following code, which is the old first version of Monte Carlo tracking implemented (starting points were still on a grid)
+
+/*
 	// define Outstream for all the lines
-        for( int line = 0; line < horilines*vertilines; line++){
+        for( int line = 0; line < lines; line++){
 		
 		OutStringStream.str("");
 		conclusionfilename = "m";
@@ -334,7 +483,7 @@ int main(int argc, char ** argv, char* envp[])
 		 commonelectrontraj.thetaStartmax = commonelectrontraj.thetaStartmax /180. * M_PI;
 	   	 
 		 // line loop, so for each line, each decay will be tracked
-           	 for( int line = 0; line < horilines*vertilines; line++){
+           	 for( int line = 0; line < lines; line++){
            	     	cout << endl << "TRAJ: line: " << line+1 << endl;
 			
 			commonelectrontraj.Ystart= startP[1][line] + commonelectrontraj.R_1 + apertYshift; // we add R_1 in Traj.cc aswellas gyraR
@@ -358,7 +507,10 @@ int main(int argc, char ** argv, char* envp[])
         MonteCarloData.close();
         
     }
+*/
     
+
+
     
 	//////////////////////////////////////////
 	////// COMPARE with G4 /////////
@@ -388,10 +540,10 @@ int main(int argc, char ** argv, char* envp[])
 		// Radius of starting disk in [m]:
 		commonelectrontraj.Rstartmax=0.000001;
 	
-		emin = myconfig.pDouble("EMIN");
-		emax = myconfig.pDouble("EMAX");
-		estep = myconfig.pDouble("ESTEP");
-		esteps = (emax - emin)/estep;
+		pmin = myconfig.pDouble("PMIN");
+		pmax = myconfig.pDouble("PMAX");
+		pstep = myconfig.pDouble("PSTEP");
+		psteps = (pmax - pmin)*pstep;
 
 		double thetastep = myconfig.pDouble("thetastep")/180.*M_PI;
 		double thetamax = myconfig.pDouble("thetamax")/180.*M_PI;
@@ -403,7 +555,7 @@ int main(int argc, char ** argv, char* envp[])
 
 		
 		//loop for different start points
-		for( int line = 0; line < horilines*vertilines; line++){
+		for( int line = 0; line < lines; line++){
 			cout << endl << "TRAJ: line: " << line+1 << endl;
 			
 			commonelectrontraj.ApertGridX=startP[0][line];
@@ -415,10 +567,10 @@ int main(int argc, char ** argv, char* envp[])
 				commonelectrontraj.thetaStartmax = angle_i*thetastep;
 				cout << endl << "TRAJ: theta= " << commonelectrontraj.thetaStartmax/M_PI*180. << endl;
 				// energy variation
-				for(int E_i=0; E_i<=esteps; E_i++){
+				for(int P_i=0; P_i<=psteps; P_i++){
 					// again set X and Y start, so that in E loop, Y is again correct after applying gyro in previous step
-					commonelectrontraj.Ekin = emin*1000. + E_i*estep*1000.;
-					cout << endl << "TRAJ: E= " << commonelectrontraj.Ekin << endl;
+					commonelectrontraj.Ekin = EfromP( pmin*1000. + P_i*pstep*1000. );
+					cout << endl << "TRAJ: P= " << pmin*1000. + P_i*pstep*1000. << " (E=" << commonelectrontraj.Ekin << ")" << endl;
 
 					for(int phi_i=0; phi_i<=phisteps; phi_i++){
 			
@@ -518,4 +670,13 @@ int main(int argc, char ** argv, char* envp[])
 	  return 0;
 
 }
+
+double EfromP(double p){
+    
+    return sqrt(pow(p,2) + pow(510998.94,2)) - 510998.94;
+}
+
+
+
+
 

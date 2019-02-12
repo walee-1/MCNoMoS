@@ -103,7 +103,8 @@ int main(int argc,char** argv, char* envp[] )
 	double RxBCurrent = myconfig.pDouble("RxBCurrent");
 	double RxB_second_scale = myconfig.pDouble("RxB_second_scale");
 	double r_coil = myconfig.pDouble("RxBInner");//simulation_parameters[3];      // inner coil radius of all coils [m]
-	double FirstLastRxB_scale = myconfig.pDouble("FirstLastRxB_scale");
+	double FirstRxB_scale = myconfig.pDouble("FirstRxB_scale");
+	double LastRxB_scale = myconfig.pDouble("LastRxB_scale");
 	// outer RxB
 	int oRxB_l = myconfig.pInt("oRxB_l");
 	int oRxB_b = myconfig.pInt("oRxB_b");
@@ -215,10 +216,11 @@ int main(int argc,char** argv, char* envp[] )
 	// Helmholtz coils 1 and 2
 	int helm1_l = myconfig.pInt("helm1_l");
 	int helm1_b = myconfig.pInt("helm1_b");
-	double helm1_inner_gap = myconfig.pDouble("helm1_inner_gap"); // gap between outer radius of underlying coil and helmholtz coil
+	double helm1_inner = myconfig.pDouble("helm1_inner"); // gap between outer radius of underlying coil and helmholtz coil
 	double helm_r_shift = myconfig.pDouble("helm_r_shift");           // shift of all coils in the aperture region in the y direction
 	double helm_x_shift = myconfig.pDouble("helm_x_shift");
 	double helm1_scale = myconfig.pDouble("helm1_curr_scale");
+	double helm1_bf_gap = myconfig.pDouble("helm1_bf_gap");
 	
 	double NC_Curr = myconfig.pDouble("NC_Curr");
 	int helm2_l = myconfig.pInt("helm2_l");
@@ -358,7 +360,6 @@ int main(int argc,char** argv, char* envp[] )
 	// helmholtz
 	double l_coil_helm1 = SL_length*helm1_l +(helm1_l -1)*raisin;
 	double t_coil_helm1 = SL_thick*helm1_b +(helm1_b -1)*raisin;
-	double helm1_inner = inlet_inner + t_coil_bf_inlet + helm1_inner_gap;
 	double helm1CurrDens = RxBCurrent*helm1_l*helm1_b/(l_coil_helm1 * t_coil_helm1); 
 
 	
@@ -399,9 +400,10 @@ int main(int argc,char** argv, char* envp[] )
 
 	// RxB
 	for (int i = 0; i < N_coil; i++) {
-		if(i == 0 || i == N_coil -1){ // First or Last RxB Coil
-			i_max[i] = RxBCurrDens * FirstLastRxB_scale;
+		if(i == 0 ){ // First or Last RxB Coil
+			i_max[i] = RxBCurrDens * FirstRxB_scale;
 		}
+		else if(i == N_coil -1) i_max[i] = RxBCurrDens * LastRxB_scale;
 		else if( i >= (N_coil-1)/2 ){
 			i_max[i] = RxBCurrDens * RxB_second_scale;
 		}
@@ -506,21 +508,27 @@ int main(int argc,char** argv, char* envp[] )
 		double elecpowersum[13];
 		
 		// RxB
-		elecpowersum[0] =(double)N_coil * elecPower(r_coil,r_coil+t_coil_RxB,RxBCurrent,RxB_l*RxB_b,copper_area);
+		elecpowersum[0] =((double)N_coil-2.) * elecPower(r_coil,r_coil+t_coil_RxB,RxBCurrent,RxB_l*RxB_b,copper_area);
+	       	elecpowersum[0] += elecPower(r_coil,r_coil+t_coil_RxB,FirstRxB_scale*RxBCurrent,RxB_l*RxB_b,copper_area);
+	       	elecpowersum[0] += elecPower(r_coil,r_coil+t_coil_RxB,LastRxB_scale*RxBCurrent,RxB_l*RxB_b,copper_area);
 		cout << "EL-POWER: 0. RxB-Coil-power = " << elecpowersum[0]/(double)N_coil << " Watt, total = " << elecpowersum[0] << " Watt" << endl;
 		
 		// Outlet
-		elecpowersum[1]=(double)n_outlet * elecPower(outlet_inner,outlet_inner+t_coil_outlet,RxBCurrent*outlet_scale,outlet_l*outlet_b,copper_area);
+		elecpowersum[1]=((double)n_outlet-1.) * elecPower(outlet_inner,outlet_inner+t_coil_outlet,RxBCurrent*outlet_scale,outlet_l*outlet_b,copper_area);
+		elecpowersum[1] += elecPower(outlet_inner,outlet_inner+t_coil_outlet,RxBCurrent*outlet_first_scale,outlet_l*outlet_b,copper_area);
 		cout << "EL-POWER: 1. Outlet-Coil-power = " << elecpowersum[1]/(double)n_outlet << " Watt, total = " << elecpowersum[1] << " Watt" << endl;
 		
 		// AF Inlet
-		elecpowersum[2]=((double)n_af_inlet) * elecPower(inlet_inner,inlet_inner+t_coil_af_inlet,RxBCurrent*af_inlet_scale,af_inlet_l*af_inlet_b,copper_area); 
+		// same procedure as with RxB, last coil factors in
+		elecpowersum[2]=((double)n_af_inlet -1.) * elecPower(inlet_inner,inlet_inner+t_coil_af_inlet,RxBCurrent*af_inlet_scale,af_inlet_l*af_inlet_b,copper_area); 
+		elecpowersum[2] += elecPower(inlet_inner,inlet_inner+t_coil_af_inlet,RxBCurrent*inlet_last_scale, af_inlet_l*af_inlet_b,copper_area);
 		cout << "EL-POWER: 2. AF-Inlet-Coil-power = " << elecpowersum[2]/(double)n_af_inlet << " Watt, total = " << elecpowersum[2] << " Watt" << endl;
 		// filter Inlet
 		elecpowersum[3]= elecPower(inlet_inner,inlet_inner+t_coil_filter_inlet,RxBCurrent*filter_inlet_scale,filter_inlet_l*filter_inlet_b,copper_area); 
 		cout << "EL-POWER: 3. Filter-Inlet-Coil-power = " << elecpowersum[3] << " Watt, total = " << elecpowersum[3] << " Watt" << endl;
 		// BF Inlet
-		elecpowersum[4]= (double)n_bf_inlet * elecPower(inlet_inner,inlet_inner+t_coil_bf_inlet,RxBCurrent*bf_inlet_scale,bf_inlet_l*bf_inlet_b,copper_area); 
+		elecpowersum[4]= ((double)n_bf_inlet - (double)inlet_dv_offN) * elecPower(inlet_inner,inlet_inner+t_coil_bf_inlet,RxBCurrent*bf_inlet_scale,bf_inlet_l*bf_inlet_b,copper_area); 
+		elecpowersum[4] += (double)inlet_dv_offN * elecPower(inlet_inner,inlet_inner+t_coil_bf_inlet,RxBCurrent*inlet_dv_scale,bf_inlet_l*bf_inlet_b,copper_area);
 		cout << "EL-POWER: 4. BF-Inlet-Coil-power = " << elecpowersum[4]/(double)n_bf_inlet << " Watt, total = " << elecpowersum[4] << " Watt" << endl;
 		
 		// Helm
@@ -537,8 +545,9 @@ int main(int argc,char** argv, char* envp[] )
 		
 		
 		// All Connec MEAN
-		elecpowersum[7]=3 * elecPower(gc_connec_inner,gc_connec_inner+t_coil_gc_connec,NC_Curr*gc_connec_scale,gc_connec_l*gc_connec_b,copper_area);
-		if( pg_connec_scale == 0. && pp_connec_scale == 0. ) elecpowersum[7] /= 3;
+		elecpowersum[7]= elecPower(gc_connec_inner,gc_connec_inner+t_coil_gc_connec,NC_Curr*gc_connec_scale,gc_connec_l*gc_connec_b,copper_area);
+		elecpowersum[7]+= elecPower(pg_connec_inner,pg_connec_inner+t_coil_pg_connec,NC_Curr*pg_connec_scale,pg_connec_l*pg_connec_b,copper_area);
+		elecpowersum[7]+= elecPower(pp_connec_inner,pp_connec_inner+t_coil_pp_connec,NC_Curr*pp_connec_scale,pp_connec_l*pp_connec_b,copper_area);
 		cout << "EL-POWER: 7. Mean Connec-Coil-power = " << elecpowersum[7]/3. << " Watt, total = " << elecpowersum[7] << " Watt" << endl;
 		
 		// Outlet Corr
@@ -614,7 +623,7 @@ int main(int argc,char** argv, char* envp[] )
 
 		blineStartZ = -l_coil_RxB/2. - RxBtoIn_d - l_coil_af_inlet*2 - d_af_inlet - af_screw_gap - (d_af_inlet+l_coil_af_inlet)*((double)n_af_inlet-3.) - l_coil_af_inlet;
 	       	blineStartZ = blineStartZ - FIntoAFIn_d - l_coil_filter_inlet - FIntoBFIn_d - (d_bf_inlet+l_coil_bf_inlet)*((double)n_bf_inlet-2.) - l_coil_bf_inlet - bf_screw_gap;
-	      	blineStartZ = blineStartZ - - l_coil_bf_inlet - pumpport_distance/2.;
+	      	blineStartZ = blineStartZ - l_coil_bf_inlet -helm1_bf_gap - l_coil_helm1 -  pumpport_distance/2.;
 
 
 		}
@@ -647,7 +656,7 @@ int main(int argc,char** argv, char* envp[] )
 	double connec_end;
 	double filterinletstartZ = -l_coil_RxB/2. - RxBtoIn_d - l_coil_af_inlet*2 - d_af_inlet - af_screw_gap - (d_af_inlet+l_coil_af_inlet)*((double)n_af_inlet-3.) - l_coil_af_inlet;
 	filterinletstartZ = filterinletstartZ - FIntoAFIn_d - l_coil_filter_inlet;
-	double pump_end = filterinletstartZ - FIntoBFIn_d - (d_bf_inlet+l_coil_bf_inlet)*((double)n_bf_inlet-2.) - l_coil_bf_inlet - bf_screw_gap - l_coil_bf_inlet;
+	double pump_end = filterinletstartZ - FIntoBFIn_d - (d_bf_inlet+l_coil_bf_inlet)*((double)n_bf_inlet-2.) - l_coil_bf_inlet - bf_screw_gap - l_coil_bf_inlet - helm1_bf_gap - l_coil_helm1;
 
 	if(NoMoSOn == 1)
 	{
@@ -726,7 +735,7 @@ int main(int argc,char** argv, char* envp[] )
 	    linear_coils_to_inputcoil_dat(i_max, N_coil+n_outlet+n_af_inlet+1, starting_point, direction, l_coil_bf_inlet, inlet_inner, t_coil_bf_inlet, d_bf_inlet, n_bf_inlet-1, inputcoil_RxB,1);
 		//reversed direction..
 		//after screw gap
-	    starting_point[3] = pump_end;
+	    starting_point[3] = pump_end + l_coil_helm1 + helm1_bf_gap;
 	    if (Perc_coordinatsystem == 0) {PERC_to_normal_coordinat_transform(starting_point, direction);}
 	    linear_coils_to_inputcoil_dat(i_max, N_coil+n_outlet+n_af_inlet+1+n_bf_inlet-1, starting_point, direction, l_coil_bf_inlet, inlet_inner, t_coil_bf_inlet, d_bf_inlet, 1, inputcoil_RxB,1);
 	
@@ -830,7 +839,7 @@ int main(int argc,char** argv, char* envp[] )
 		direction[1] = 0.;
 		direction[2] = 0.;
 		direction[3] = 1.;
-	        pump_end = filterinletstartZ - FIntoBFIn_d - ((double)n_bf_inlet-1.)*(d_bf_inlet+l_coil_bf_inlet) - l_coil_bf_inlet - HelmToBF_off; 
+		pump_end = filterinletstartZ - FIntoBFIn_d - (d_bf_inlet+l_coil_bf_inlet)*((double)n_bf_inlet-2.) - l_coil_bf_inlet - bf_screw_gap - l_coil_bf_inlet - helm1_bf_gap - l_coil_helm1;
 	        connec_end = pump_end - pumpport_distance - l_coil_helm2 - gate_dist;        // position of the upstream Pump port z-position
 		gate_begin = connec_end; 
 	        starting_point[1] = 0.;
@@ -875,8 +884,8 @@ int main(int argc,char** argv, char* envp[] )
 	}
 
 	if(blinebool){
-		//b_line_real(NoMoSOn,R_1,alpha,blineStartZ,onlyCornerCenter,horilines,vertilines,ApertX,ApertY,apertYshift,apertXshift,inputcoil_RxB,filedir,0,-1,1187.29,2,detpos); //..,..,Z,horil,vertil,apertx,aperty,..,..,prep,driftdir,mom,driftOn, detposZ
-		//b_line_real(NoMoSOn,R_1,alpha,blineStartZ,onlyCornerCenter,horilines,vertilines,ApertX,ApertY,apertYshift,apertXshift,inputcoil_RxB,filedir,0,-1,1187.29,1,detpos); //..,..,Z,horil,vertil,apertx,aperty,..,..,prep,driftdir,momentum keV,driftOn, detposZ
+		b_line_real(NoMoSOn,R_1,alpha,blineStartZ,onlyCornerCenter,horilines,vertilines,ApertX,ApertY,apertYshift,apertXshift,inputcoil_RxB,filedir,0,-1,1187.29,2,detpos); //..,..,Z,horil,vertil,apertx,aperty,..,..,prep,driftdir,mom,driftOn, detposZ
+		b_line_real(NoMoSOn,R_1,alpha,blineStartZ,onlyCornerCenter,horilines,vertilines,ApertX,ApertY,apertYshift,apertXshift,inputcoil_RxB,filedir,0,-1,1187.29,1,detpos); //..,..,Z,horil,vertil,apertx,aperty,..,..,prep,driftdir,momentum keV,driftOn, detposZ
 		b_line_real(NoMoSOn,R_1,alpha,blineStartZ,onlyCornerCenter,horilines,vertilines,ApertX,ApertY,apertYshift,apertXshift,inputcoil_RxB,filedir,0,-1,1187.29,0,detpos); //..,..,Z,horil,vertil,apertx,aperty,..,..,prep,driftdir,mom,driftOn, detposZ
 	}
 	

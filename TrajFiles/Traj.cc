@@ -20,6 +20,8 @@ struct typeelectrontraj{
         double Ekin;            // particle energy [eV]
         double Errenergy;       // Energy error [eV]
         double Time;            // particle flight time [s]
+	int hemisphere;
+	int aperture;
     // Parameters of the starting disk = source of the particles representing an appertur or a beam
         double Xstart, ApertGridX;          // x-coordinat of the starting disk center [m]
         double Ystart, ApertGridY;          // y-coordinat of the starting disk center [m]
@@ -31,6 +33,7 @@ struct typeelectrontraj{
     // Detector positions:
         double zdetector;       // axial position of the detector
         double Zend;            // maximal z position
+	bool NoMoSOn;
     // NoMoS parameters:
         double R_1;             // radius of the spectrometer
 	bool CompareWBlines;
@@ -52,7 +55,7 @@ struct typeelectrontraj{
   double zstart,rstart,thetastart,excess_energy,Elongstart,Etransstart;
   double phidirstart;
   double Rstart;
-  double Deladiabinv;
+  double Deladiabinv; //Delta adiabatic invariant
   int Nstep;
   int pixelring;
 }
@@ -80,7 +83,7 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 	                                    //  electronindex=4: reached the detector
 	std::stringstream CompareFileName;
 	double CrossP[4], CrossPL, GuidX[4], GuidB[4];
-
+	double sign;
 	
 	// COMPARE WITH BLINES
 	if( commonelectrontraj.CompareWBlines ){
@@ -102,12 +105,12 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 			if(commonelectrontraj.typeprint==1){
 			    if( commonelectrontraj.CompareWBlines ) {
 			    	CompareFileName << commonelectrontraj.filepath << "trajectories/" << "X" << commonelectrontraj.ApertGridX << "_Y" << commonelectrontraj.ApertGridY;
-			    	CompareFileName << "_th" << commonelectrontraj.thetaStartmax << "_Ekin" << commonelectrontraj.Ekin/1000. << "keV_" << "phi"<< commonelectrontraj.Startphi << "_" << ie << ".txt";
+			    	CompareFileName << "_th" << commonelectrontraj.thetaStartmax << "_Ekin" << int(commonelectrontraj.Ekin/1000.) << "keV_" << "phi"<< commonelectrontraj.Startphi << "_" << ie << ".txt";
 			    	CompareFileName >> trajfilename;
 			    	commonelectrontraj.outfile.open(trajfilename.c_str(),ios::out);
 			    }
 			    else{	
-			    	sprintf(numstr1, "%d", (int)commonelectrontraj.Ekin/1000);
+			    	sprintf(numstr1, "%d", int(commonelectrontraj.Ekin/1000) );
 			    	sprintf(numstr2, "%d", ie);
 			    	trajfilename="trajectories/particle";
 			    	trajfilename+=numstr2;
@@ -124,12 +127,15 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 
 			// Electron generator:
 			electrongeneration(x,v,commonelectrontraj.Startphi);            // sets initial condition for x and v, also phi setable
+											// uses XStart etc. calcs v from th,phi,Ekin and n from Bfield
 		
 
 			/////////////////////////////////////////////////
 			// write out first point/starting point to file before going into traj1
         		magfieldtraj(x,B,commonelectrontraj.filepath);                      // Calculate B-field
 			// v x B
+			if(CHARGE < 0) sign = -1.;
+			else sign = 1.;
 			CrossP[1] = B[3]*v[2] - B[2]*v[3];
 			CrossP[2] = -B[3]*v[1] + B[1]*v[3];
 			CrossP[3] = B[2]*v[1] - B[1]*v[2];
@@ -138,7 +144,7 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 				for(int i=1;i<=3;i++){GuidX[i] = x[i];}
 			}
 			else{
-				for(int i=1;i<=3;i++){GuidX[i] = x[i] - CrossP[i]/CrossPL * StartgyraR;};
+				for(int i=1;i<=3;i++){GuidX[i] = x[i] + sign * CrossP[i]/CrossPL * StartgyraR;};
 			}
 			
 			magfieldtraj(GuidX,GuidB,commonelectrontraj.filepath);
@@ -174,22 +180,27 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 	} // Compare with blines if end
 
 
+
+	//////////////////////////////////////////
+	// MONTE CARLO detector data!
+	// ///////////////////////////////
 	if( commonelectrontraj.MonteCarlo ){
 
-			//if you want a random phi, give it here to electrongeneration
-			//phidir=2.*PI*randomnumber();          // phi = polar angle
-			
-			// Electron generator:
-			electrongeneration(x,v,commonelectrontraj.Startphi);            // sets initial condition for x and v, also phi setable
-			
-			// Trajectory calculation:
-			trajelectron1(x,v,electronindex);
+		// Electron generator:
+		electrongeneration(x,v,commonelectrontraj.Startphi);            // sets initial condition for x and v, also phi setable
+		
+		// Trajectory calculation:
+		trajelectron1(x,v,electronindex);
 
-			// trajelectron doesnt write out anything -> now write out last point into the right file
-			
-			OutStream << x[1] << "\t" << x[2] << "\t" << x[3] << "\t" << v[1] << "\t" << v[2] << "\t" << v[3] << "\t" << commontrajexact.Ekin;
+		// trajelectron doesnt write out anything -> now write out last point into the right file
+		
+		OutStream << commonelectrontraj.Xstart << "\t"<< commonelectrontraj.Ystart << "\t" << commonelectrontraj.Zstart << "\t"  << x[1] << "\t" << x[2] << "\t" << x[3] << "\t";
+	        OutStream << v[1] << "\t" << v[2] << "\t" << v[3] << "\t" << commontrajexact.Ekin << "\t" << commonelectrontraj.hemisphere;
+		OutStream << "\t" << commonelectrontraj.aperture << endl;
 
 	}
+
+
 
 
 	// COMPARE WITH G4
@@ -211,7 +222,7 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 			if(commonelectrontraj.typeprint==1){
 			    if( commonelectrontraj.G4Compare ) {
 			    	CompareFileName << commonelectrontraj.filepath << "trajectories/" << "X" << commonelectrontraj.ApertGridX << "_Y" << commonelectrontraj.ApertGridY;
-			    	CompareFileName << "_th" << commonelectrontraj.thetaStartmax << "_Ekin" << commonelectrontraj.Ekin/1000. << "keV_" << "phi"<< commonelectrontraj.Startphi << "_" << ie << ".txt";
+			    	CompareFileName << "_th" << commonelectrontraj.thetaStartmax << "_Ekin" << int(commonelectrontraj.Ekin/1000.) << "keV_" << "phi"<< commonelectrontraj.Startphi << "_" << ie << ".txt";
 			    	CompareFileName >> trajfilename;
 			    	commonelectrontraj.outfile.open(trajfilename.c_str(),ios::out);
 			    }
@@ -299,164 +310,207 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 
 
 void trajelectron1(double *x, double *v, int& electronindex){
-// Trajectory calculation of 1 electron, with exact electron motion.
-// x[1],x[2],x[3]: starting and final spatial coordinates of the electron (m)
-// v[1],v[2],v[3]: starting and final velocity components of the electron (m/s)
+	// Trajectory calculation of 1 electron, with exact electron motion.
+	// x[1],x[2],x[3]: starting and final spatial coordinates of the electron (m)
+	// v[1],v[2],v[3]: starting and final velocity components of the electron (m/s)
+	
+	
+	// used variables:
+	double PI = 3.1415926;
+	const double c=299792458.;  // velocity of light in SI units
+	int istep, i;               // loop counter (Runge-Kutta, coordinates)
+	double Phi,B[4],b,btheta;   // Electro-magnetic parameters
+	double gam,p[4],costheta,theta;  // Particle parameters (absolute velocity[m/s],[m²/s²],...)
+	double err,energy0;         // Energy error calculation
+	char filename[20];
+	double z,r,rmax,pathlength,Ef0[4],Phi0;
+	double E0,E,kin_energy,phi,nH2,zend,vz,vzprev,d;
+	int j,index,numstepmax;
+	double rc,energy;
+	double Elong,plong2,pbper,pb;
+	double pperp2,adiabinv,adiabinv0,deladiabinv,maxdeladiabinv;
+	double zmax,Elongmin,zmin,Rmean;
+	double gyraR, CrossPL;
+	double GuidX[4], CrossP[4], GuidB[4];
+	long double V, V_parallel, V_perpend;
+	int ZatApert = 0;
+	double sign;
+	/////////
+
+	// initialize calculation:
+	commontrajexact.trajstart=0;
+	commonelectrontraj.Errenergy=0.;    // energy error [eV]
+	commonelectrontraj.Time=0.;         // particle flight time [s]
+	
+	commontrajexact.filepath = commonelectrontraj.filepath;
+	// Starting of Runge-Kutta loop:
+	for(istep=1; istep<=commonelectrontraj.numstepmax; istep++){
+		// Runge-Kutta step:
+		trajexact(x,v);             // calculation of the x and v after the Runge-Kutta step
+		if(commontrajexact.index==1){
+		    electronindex=0;
+		    break;
+		}
+	
+		commonelectrontraj.Time+=commontrajexact.h;     // Advance the flight time clock
+		V=sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3]);
+		Phi=commontrajexact.Phi;                // Electric potential
+		magfieldtraj(x,B,commonelectrontraj.filepath);                      // Calculate B-field
+		b=sqrt(B[1]*B[1]+B[2]*B[2]+B[3]*B[3]);  // absolute B-field [T]
+		if(x[3]>=0.) btheta = acos((B[3]*x[2] - B[2]*x[3])/(b*sqrt(x[2]*x[2]+x[3]*x[3])))*180./PI;
+		else btheta = acos(B[3]/b)*180./PI;
+		V_parallel = (v[1]*B[1]+v[2]*B[2]+v[3]*B[3])/b;
+		costheta=V_parallel/V;
+		// case if argument of acos is so close to 1, that error makes acos give NAN				
+		if( fabs(costheta - 1.) < 10.e-12 ){
+			costheta = 1.;
+		}
+		
+		theta=180./PI*acos(costheta);         // [deg]
+		
+		gam=1./sqrt(1.-V*V/(c*c));     // gamma factor:
+		
+		for(i=1;i<=3;i++)p[i]=MASS*v[i]*gam;  // p: relativistic momentum
+		
+		// The longitudinal and transversal kinetic energies(in unit eV):
+		pb=p[1]*B[1]+p[2]*B[2]+p[3]*B[3];
+		pbper=pb/(b*b);
+		plong2=0.;
+		for(i=1;i<=3;i++)  plong2+=(pbper*B[i])*(pbper*B[i]);
+		Elong=plong2/(1.+gam)/MASS/fabs(CHARGE);
+		pperp2=0.;
+		for(i=1;i<=3;i++) pperp2+=(p[i]-pbper*B[i])*(p[i]-pbper*B[i]);
+		adiabinv=pperp2/(2.*MASS*b*fabs(CHARGE));
+		if(istep==1) adiabinv0=adiabinv;
+		deladiabinv=(adiabinv-adiabinv0)/adiabinv0;
+		
+		// Calculation of the energy error:
+		if(istep==1)energy0=commontrajexact.energy;   // initilization
+		err=(commontrajexact.energy-energy0)/energy0; // calculation of energy error
+		if(fabs(err)>commonelectrontraj.Errenergy)commonelectrontraj.Errenergy=fabs(err);     // memorize the larges error
+		
+		// break the loop:
+		// Time break
+		if(istep==commonelectrontraj.numstepmax || commonelectrontraj.Time>commonelectrontraj.Timemax){
+		    	cout << "TRAP BREAK" << endl;
+			electronindex=1;        // particle is trapped in the experment
+		    break;                  // stop trajacking because of steps limit or timelimit
+		}
+		
+		// Z Outside break
+		if(x[3] >  commonelectrontraj.Zend ){   // break if particle reaches the seted end or fall behind the start position
+		   	cout << "Z Zend BREAK" << endl;
+			electronindex=2;        // particle left the
+			break;
+		} 
+		
+		// particle was reflected
+		if( x[3] <  commonelectrontraj.Zstart - 0.1 ){
+		   	cout << "Z Zstart BREAK" << endl;
+			electronindex=3;        // particle left the
+			break;
+		}
+		
+		//Nomos break, assuming a 300 tube radius!
+		if(x[3]>0. && pow((sqrt(x[2]*x[2]+x[3]*x[3])-commonelectrontraj.R_1),2)+x[1]*x[1] > 0.15*0.15){
+			cout << "NOMOS WALL BREAK" << endl;
+			electronindex=4;        // particle hit the RxB tube
+			break;                  // stop trajacking
+		}
+		
+		// Detector break (includes PERConly, detector set differently, without y restriction)
+		if(commonelectrontraj.NoMoSOn == true){
+			// Nomos detector break
+			if(x[3] <  commonelectrontraj.zdetector && x[2] <  0.){
+				electronindex=5;        // particle reached the detector
+				cout << "NOMOS det reached" << endl;
+				break;                  // stop trajacking
+			}
+		}
+		else{
+			// PERC detector break
+			if( x[3] >  commonelectrontraj.zdetector ){
+				electronindex=5;        // particle reached the detector
+				cout << "PERC det reached" << endl;
+				break;                  // stop trajacking
+			}
+		}
+		
+		// break if hit the wall in Perc
+		if(x[3] <  -1. && (fabs(x[2] - 1) >  0.5 || fabs(x[1]) > 0.5)){   
+		    	cout << "PERC WALL BREAK" << endl;
+			electronindex=6;        // particle left the
+		    	break;
+		}
+		
+		// Z, R: z and r coordinates in m:  << setw(10) << Z << (10) << R
+		// b: magnetic field absolute value in T
+		// Phi: electric potential in V
+		// Ekin: kinetic energy in eV
+		// err: relative change of total energy
+		// commonelectrontraj.Time: time in s
 
 
-    // used variables:
-       double PI = 3.1415926;
-    const double c=299792458.;  // velocity of light in SI units
-    int istep, i;               // loop counter (Runge-Kutta, coordinates)
-    double Phi,B[4],b,btheta;   // Electro-magnetic parameters
-    double gam,p[4],costheta,theta;  // Particle parameters (absolute velocity[m/s],[m²/s²],...)
-    double err,energy0;         // Energy error calculation
-  char filename[20];
-  double z,r,rmax,pathlength,Ef0[4],Phi0;
-  double E0,E,kin_energy,phi,nH2,zend,vz,vzprev,d;
-  int j,index,numstepmax;
-  double rc,energy;
-  double Elong,plong2,pbper,pb;
-  double pperp2,adiabinv,adiabinv0,deladiabinv,maxdeladiabinv;
-  double zmax,Elongmin,zmin,Rmean;
-  double gyraR, CrossPL;
-  double GuidX[4], CrossP[4], GuidB[4];
-  long double V, V_parallel, V_perpend;
-/////////
+		if(! commonelectrontraj.MonteCarlo ) {
 
-    // initialize calculation:
-    commontrajexact.trajstart=0;
-    commonelectrontraj.Errenergy=0.;    // energy error [eV]
-    commonelectrontraj.Time=0.;         // particle flight time [s]
+			// calculate guiding center and evaluate guiding center B-field as well
+			V_perpend = sin(acos(costheta)) * V;
+			if(CHARGE < 0) sign = -1.;
+			else sign = 1.;
+			gyraR = gam * MASS * V_perpend/ 1.602177e-19 / b;
+			CrossP[1] = B[3]*v[2] - B[2]*v[3];
+			CrossP[2] = -B[3]*v[1] + B[1]*v[3];
+			CrossP[3] = B[2]*v[1] - B[1]*v[2];
+			CrossPL = sqrt(CrossP[1]*CrossP[1] + CrossP[2]*CrossP[2] + CrossP[3]*CrossP[3]);
+			if(CrossPL == 0.){
+				for(int i=1;i<=3;i++){GuidX[i] = x[i];}
+			}
+			else{
+				for(int i=1;i<=3;i++){GuidX[i] = x[i] + sign* CrossP[i]/CrossPL * gyraR;};
+			}
+			magfieldtraj(GuidX,GuidB,commonelectrontraj.filepath);
 
-    commontrajexact.filepath = commonelectrontraj.filepath;
-    // Starting of Runge-Kutta loop:
-    for(istep=1; istep<=commonelectrontraj.numstepmax; istep++){
-        // Runge-Kutta step:
-        trajexact(x,v);             // calculation of the x and v after the Runge-Kutta step
-        if(commontrajexact.index==1){
-            electronindex=0;
-            break;
-        }
+			// write out traj info
+        		if(commonelectrontraj.typeprint==1){        // save simulation data of the particle track
+        		    // spatial coordinats x[i] of the particle [m]
+        		    commonelectrontraj.outfile << x[1] << "\t" << x[2] << "\t" << x[3] << "\t";
+        		    // velocity of the particle [m/s]
+        		    commonelectrontraj.outfile << v[1] << "\t" << v[2] << "\t" << v[3] << "\t";
+			    //magnetic field at particle position
+        		    commonelectrontraj.outfile << B[1] << "\t" << B[2] << "\t" << B[3] << "\t";
+			    // guiding center
+			    commonelectrontraj.outfile << GuidX[1] << "\t" << GuidX[2] << "\t" << GuidX[3] << "\t";
+			    // Bfield at guid center
+			    commonelectrontraj.outfile << GuidB[1] << "\t" << GuidB[2] << "\t" << GuidB[3] << "\t";
+			    // rest of info
+			    commonelectrontraj.outfile << commontrajexact.Ekin << setw(16) <<  scientific << err << setw(16) << commonelectrontraj.Time << setw(16) << btheta << setw(16) << theta << endl;
+        		}
+		}
 
-        commonelectrontraj.Time+=commontrajexact.h;     // Advance the flight time clock
-        V=sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3]);
-        Phi=commontrajexact.Phi;                // Electric potential
-        magfieldtraj(x,B,commonelectrontraj.filepath);                      // Calculate B-field
-        b=sqrt(B[1]*B[1]+B[2]*B[2]+B[3]*B[3]);  // absolute B-field [T]
-        if(x[3]>=0.) btheta = acos((B[3]*x[2] - B[2]*x[3])/(b*sqrt(x[2]*x[2]+x[3]*x[3])))*180./PI;
-        else btheta = acos(B[3]/b)*180./PI;
-	V_parallel = (v[1]*B[1]+v[2]*B[2]+v[3]*B[3])/b;
-        costheta=V_parallel/V;
-	// case if argument of acos is so close to 1, that error makes acos give NAN				
-	if( fabs(costheta - 1.) < 10.e-12 ){
-		costheta = 1.;
+
+		//	first close point to aperture
+		if( commonelectrontraj.MonteCarlo ){ //for monte carlo, check if particle went through aperture or not
+			if( x[3] >= -0.5 && ZatApert == 0 ){ //for MonteCarlo, we get Aperture size by the global values ApertGridX/Y
+				ZatApert = 1;
+				// now we check if the particle at that specific z is inside of aperture or outside, we don't consider apertshifts yet!!
+				if(fabs( x[1]) < commonelectrontraj.ApertGridX/2. && fabs( x[2] - commonelectrontraj.R_1)  < commonelectrontraj.ApertGridY/2.){
+					commonelectrontraj.aperture = 1;
+				}
+				else{
+					commonelectrontraj.aperture = -1;
+					break; //we don't track it further
+				}
+			}
+		}
+
 	}
-       
-	theta=180./PI*acos(costheta);         // [deg]
 
-        gam=1./sqrt(1.-V*V/(c*c));     // gamma factor:
-
-        for(i=1;i<=3;i++)p[i]=MASS*v[i]*gam;  // p: relativistic momentum
-
-	// The longitudinal and transversal kinetic energies(in unit eV):
-      	pb=p[1]*B[1]+p[2]*B[2]+p[3]*B[3];
-      	pbper=pb/(b*b);
-      	plong2=0.;
-      	for(i=1;i<=3;i++)
-      	  plong2+=(pbper*B[i])*(pbper*B[i]);
-      	Elong=plong2/(1.+gam)/MASS/fabs(CHARGE);
-      	pperp2=0.;
-      	for(i=1;i<=3;i++) pperp2+=(p[i]-pbper*B[i])*(p[i]-pbper*B[i]);
-      	adiabinv=pperp2/(2.*MASS*b*fabs(CHARGE));
-      	if(istep==1)
-      	   adiabinv0=adiabinv;
-      	deladiabinv=(adiabinv-adiabinv0)/adiabinv0;
-
-        // Calculation of the energy error:
-        if(istep==1)energy0=commontrajexact.energy;   // initilization
-        err=(commontrajexact.energy-energy0)/energy0; // calculation of energy error
-        if(fabs(err)>commonelectrontraj.Errenergy)commonelectrontraj.Errenergy=fabs(err);     // memorize the larges error
-
-        // break the loop:
-	// Time break
-        if(istep==commonelectrontraj.numstepmax || commonelectrontraj.Time>commonelectrontraj.Timemax){
-            	cout << "TRAP BREAK" << endl;
-		electronindex=1;        // particle is trapped in the experment
-            break;                  // stop trajacking because of steps limit or timelimit
-        }
-
-	// Z Outside break
-	if(x[3] >  commonelectrontraj.Zend ){   // break if particle reaches the seted end or fall behind the start position
-	   	cout << "Z Zend BREAK" << endl;
-		electronindex=2;        // particle left the
-		break;
-	}
-	if( x[3] <  commonelectrontraj.Zstart - 0.1 ){
-	   	cout << "Z Zstart BREAK" << endl;
-		electronindex=3;        // particle left the
-		break;
-	}
-
-	//Nomos break, assuming a 300 tube radius!
-        if(x[3]>0. && pow((sqrt(x[2]*x[2]+x[3]*x[3])-commonelectrontraj.R_1),2)+x[1]*x[1] > 0.15*0.15){
-		cout << "NOMOS WALL BREAK" << endl;
-		electronindex=4;        // particle hit the RxB tube
-        	break;                  // stop trajacking
-        }
-        if(x[3] <  commonelectrontraj.zdetector && x[2] <  0.){
-        	electronindex=5;        // particle reached the detector
-        	break;                  // stop trajacking
-        }
-
-        if(x[3] <  -1. && (fabs(x[2] - 1) >  0.5 || fabs(x[1]) > 0.5)){   // break if hit the wall in Perc
-            	cout << "PERC WALL BREAK" << endl;
-		electronindex=6;        // particle left the
-            	break;
-        }
-
-// Z, R: z and r coordinates in m:  << setw(10) << Z << (10) << R
-// b: magnetic field absolute value in T
-// Phi: electric potential in V
-// Ekin: kinetic energy in eV
-// err: relative change of total energy
-// commonelectrontraj.Time: time in s
-
-	// calculate guiding center and evaluate guiding center B-field as well
-	V_perpend = sin(acos(costheta)) * V;
-	gyraR = - gam * MASS * V_perpend/ CHARGE / b;
-	CrossP[1] = B[3]*v[2] - B[2]*v[3];
-	CrossP[2] = -B[3]*v[1] + B[1]*v[3];
-	CrossP[3] = B[2]*v[1] - B[1]*v[2];
-	CrossPL = sqrt(CrossP[1]*CrossP[1] + CrossP[2]*CrossP[2] + CrossP[3]*CrossP[3]);
-	if(CrossPL == 0.){
-		for(int i=1;i<=3;i++){GuidX[i] = x[i];}
-	}
-	else{
-		for(int i=1;i<=3;i++){GuidX[i] = x[i] - CrossP[i]/CrossPL * gyraR;};
-	}
-	magfieldtraj(GuidX,GuidB,commonelectrontraj.filepath);
-
-	// write out traj info
-        if(commonelectrontraj.typeprint==1){        // save simulation data of the particle track
-            // spatial coordinats x[i] of the particle [m]
-            commonelectrontraj.outfile << x[1] << "\t" << x[2] << "\t" << x[3] << "\t";
-            // velocity of the particle [m/s]
-            commonelectrontraj.outfile << v[1] << "\t" << v[2] << "\t" << v[3] << "\t";
-	    //magnetic field at particle position
-            commonelectrontraj.outfile << B[1] << "\t" << B[2] << "\t" << B[3] << "\t";
-	    // guiding center
-	    commonelectrontraj.outfile << GuidX[1] << "\t" << GuidX[2] << "\t" << GuidX[3] << "\t";
-	    // Bfield at guid center
-	    commonelectrontraj.outfile << GuidB[1] << "\t" << GuidB[2] << "\t" << GuidB[3] << "\t";
-	    // rest of info
-	    commonelectrontraj.outfile << commontrajexact.Ekin << setw(16) <<  scientific << err << setw(16) << commonelectrontraj.Time << setw(16) << btheta << setw(16) << theta << endl;
-        }
-
-  }
-
-  return;
+	return;
 }
+
+
+
+
 
 //////////////////////////////////////////////////////////
 
@@ -481,13 +535,20 @@ Units:
     V=beta*c;                       // calculate the magnitute of the particl velocity [m/s]
     // Calc. of unit vectors na, nb (orthogonal to n):
     xz=sqrt(n[1]*n[1]+n[3]*n[3]);   // magnitude of the projection of the B-field's unity vector on the xz plane
-    if(xz>1.e-12){na[1]=n[3]/xz; na[2]=0.; na[3]=n[1]/xz;} // creat a unit vector perpenticular to the project y simply rotate the vector in the xy plane and renormalize
+    if(xz>1.e-12){na[1]=-n[3]/xz; na[2]=0.; na[3]=n[1]/xz;} // creat a unit vector perpenticular to the project y simply rotate the vector in the xy plane and renormalize
     else{na[1]=1.; na[2]=0.; na[3]=0.;}   // if xy is to small than the B-field points approximatly in the y-direction
     // Calculating nb = n x na (cross/vector product)
     nb[1]=n[2]*na[3]-n[3]*na[2];
     nb[2]=n[3]*na[1]-n[1]*na[3];
     nb[3]=n[1]*na[2]-n[2]*na[1];
     // sintheta = sin(theta):
+    //
+    //debugging vectors
+    //cout << "TRAJBUG: normal vectors:" << endl << n[1] << "\t" << n[2] << "\t" << n[3] << endl;
+    //cout << na[1] << "\t" << na[2] << "\t" << na[3] << endl;
+    //cout << nb[1] << "\t" << nb[2] << "\t" << nb[3] << endl;
+    //
+    //
     sintheta=sqrt(fabs(1.-costheta*costheta));
     // Velocity vector computation:
     for(i=1;i<=3;i++)

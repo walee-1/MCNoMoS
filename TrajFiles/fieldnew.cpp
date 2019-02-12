@@ -16,6 +16,7 @@ void elfieldtraj(double *x,double *E,double *Phi);
 void elfield(double z,double r,double *Phi,double *Ez,double *Er);
 
 double common[100],facB,facE;
+double earth_Bx, earth_By, earth_Bz;
 
 #include "magfield3.cpp"
 
@@ -30,6 +31,11 @@ void magfieldtraj(double *x,double *B, string filedir){
 //
   magfield(x,B,filedir);        // calculate B-field with magfield
   B[1]*=facB; B[2]*=facB; B[3]*=facB;   // rescale B-field
+  // add earth magnetic field
+  B[1] += earth_Bx*10e-6;
+  B[2] += earth_By*10e-6;
+  B[3] += earth_Bz*10e-6;
+
   return;
 }
 
