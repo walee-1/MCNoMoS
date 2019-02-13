@@ -32,9 +32,10 @@ void magfieldtraj(double *x,double *B, string filedir){
   magfield(x,B,filedir);        // calculate B-field with magfield
   B[1]*=facB; B[2]*=facB; B[3]*=facB;   // rescale B-field
   // add earth magnetic field
-  B[1] += earth_Bx*10e-6;
-  B[2] += earth_By*10e-6;
-  B[3] += earth_Bz*10e-6;
+  //
+  B[1] += earth_Bx*1e-6;
+  B[2] += earth_By*1e-6;
+  B[3] += earth_Bz*1e-6;
 
   return;
 }

@@ -94,8 +94,6 @@ int main(int argc, char ** argv, char* envp[])
 				counter ++;
 			}
 		}
-		cout << "TRAJBUG: startPs" << endl;
-		for(int i=0;i<5;i++) cout << startP[0][i] << "\t" << startP[1][i] << endl;
 	}
 	else{
     		double xstep;
@@ -174,6 +172,7 @@ int main(int argc, char ** argv, char* envp[])
 	earth_Bx = myconfig.pDouble("earth_BN");
 	earth_By = myconfig.pDouble("earth_BE");
 	earth_Bz = myconfig.pDouble("earth_Bvert");
+	
 	// we turn around the coordinates of the earth magnetic field dependent on ILL OR PERC
 	if( !commonelectrontraj.PercOn ){ //ILL
 		earth_Bx = -earth_Bx/sqrt(2.) - earth_By/sqrt(2.);
