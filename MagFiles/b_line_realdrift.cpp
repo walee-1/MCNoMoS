@@ -114,7 +114,7 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 		// file header positions:
 	    	fileout << "pos_x [m]" << "\t" << "pos_y[m]" << "\t" << "pos_z[m]";
 	    	// file header B-field values
-	    	fileout <<"\t" << "B-Field" <<"\t"<< "B_x" <<"\t"<< "B_y" <<"\t"<< "B_z" << "\n";
+	    	fileout <<"\t" << "B-Field" <<"\t"<< "B_x" <<"\t"<< "B_y" <<"\t"<< "B_z" << "\t" << "dAlpha" << "\n";
 		
 		// status report
 		std::cout << "B-LINE: line = " << line +1 << std::endl;
@@ -144,7 +144,7 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 	      			// store the datapoint's position
 		      		fileout << P[1] <<"\t"<< P[2]<<"\t"<< P[3];
 		      		// store the B-field values in the datapoint
-	      			fileout <<"\t"<< b <<"\t"<< B[1] <<"\t"<< B[2] <<"\t"<< B[3] << "\n" ;
+	      			fileout <<"\t"<< b <<"\t"<< B[1] <<"\t"<< B[2] <<"\t"<< B[3] << "\t" << angle << "\n" ;
 				i_loop = 0;
 			} else {i_loop++;}
 			
