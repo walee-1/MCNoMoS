@@ -490,7 +490,7 @@ void trajelectron1(double *x, double *v, int& electronindex){
 
 		//	first close point to aperture
 		if( commonelectrontraj.MonteCarlo ){ //for monte carlo, check if particle went through aperture or not
-			if( x[3] >= -0.5 && ZatApert == 0 ){ //for MonteCarlo, we get Aperture size by the global values ApertGridX/Y
+			if( x[3] >= -0.3 && ZatApert == 0 ){ //for MonteCarlo, we get Aperture size by the global values ApertGridX/Y
 				ZatApert = 1;
 				// now we check if the particle at that specific z is inside of aperture or outside, we don't consider apertshifts yet!!
 				if(fabs( x[1]) < commonelectrontraj.ApertGridX/2. && fabs( x[2] - commonelectrontraj.R_1)  < commonelectrontraj.ApertGridY/2.){
