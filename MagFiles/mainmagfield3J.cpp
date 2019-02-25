@@ -697,8 +697,8 @@ int main(int argc,char** argv, char* envp[] )
 
 		    // OUTLET CORR coils
 	    starting_point[1] = outletCorr_x_shift;
-	    starting_point[2] = starting_point[2] - (n_outlet*l_coil_outlet+(n_outlet-1)*d_outlet)*sin(alpha) +(n_outletCorr*l_coil_outletCorr+(n_outletCorr-1)*d_outletCorr+outletCorr_fromoutEnd)*sin(alpha);
-	    starting_point[3] = starting_point[3] + (n_outlet*l_coil_outlet+(n_outlet-1)*d_outlet)*cos(alpha) -(n_outletCorr*l_coil_outletCorr+(n_outletCorr-1)*d_outletCorr+outletCorr_fromoutEnd)*cos(alpha);
+	    starting_point[2] = starting_point[2] - ((n_outlet-1)*l_coil_outlet+(n_outlet-2)*d_outlet)*sin(alpha) +(n_outletCorr*l_coil_outletCorr+(n_outletCorr-1)*d_outletCorr+outletCorr_fromoutEnd)*sin(alpha);
+	    starting_point[3] = starting_point[3] + ((n_outlet-1)*l_coil_outlet+(n_outlet-2)*d_outlet)*cos(alpha) -(n_outletCorr*l_coil_outletCorr+(n_outletCorr-1)*d_outletCorr+outletCorr_fromoutEnd)*cos(alpha);
 	    if (Perc_coordinatsystem == 0) {PERC_to_normal_coordinat_transform(starting_point, direction);}
 		// input: current, starting coil number, start P, direction, length, innerR, thick, gap, n_outlet, filedir, reverse direction yes =1
 	    linear_coils_to_inputcoil_dat(i_max,N_coil+n_outlet+n_inlet+2+n_filter+3, starting_point, direction, l_coil_outletCorr, outletCorr_inner, t_coil_outletCorr, d_outletCorr, n_outletCorr, inputcoil_RxB,0);
