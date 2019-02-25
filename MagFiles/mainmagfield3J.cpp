@@ -498,6 +498,7 @@ int main(int argc,char** argv, char* envp[] )
 ///////////////////////////////////////////////////////////////////
       //elec power + cooling calc
 ///////////////////////////////////////////////////////////////////
+	double total = 0.;
 	if( Conductor == "NL" ){
 		double copper_edge_radius = 0.001; //edge radius in meter
 		double edge_area = copper_edge_radius*copper_edge_radius*(4. - M_PI);
@@ -573,7 +574,6 @@ int main(int argc,char** argv, char* envp[] )
 		else elecpowersum[12] = 0.;
 		cout << "EL-POWER: 12. oRxB_Coil-power = " << elecpowersum[12]/(double)No_coil << " Watt, total = " << elecpowersum[12] << " Watt" << endl;
 
-		double total=0.;
 		for(int i = 0; i<13;i++){total+=elecpowersum[i];}
 		cout << "EL-POWER: Total el. power consumption of NoMoS: " << total << " Watt" << endl;
 	
@@ -860,6 +860,8 @@ int main(int argc,char** argv, char* envp[] )
 		configinfo << "startZ" << "\t" << blineStartZ << endl;
 	}
 	
+	//here we write the total power consumption to the info file
+	configinfo << "power" << "\t" << total << endl;
 	configinfo.close();
 	
 	cout << "MAG: All coils built" << endl;
