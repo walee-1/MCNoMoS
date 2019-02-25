@@ -21,7 +21,7 @@ struct typeelectrontraj{
         double Errenergy;       // Energy error [eV]
         double Time;            // particle flight time [s]
 	int hemisphere;
-	int aperture;
+	int apertureX, apertureY;
     // Parameters of the starting disk = source of the particles representing an appertur or a beam
         double Xstart, ApertGridX;          // x-coordinat of the starting disk center [m]
         double Ystart, ApertGridY;          // y-coordinat of the starting disk center [m]
@@ -196,7 +196,7 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 		
 		OutStream << commonelectrontraj.Xstart << "\t"<< commonelectrontraj.Ystart << "\t" << commonelectrontraj.Zstart << "\t"  << x[1] << "\t" << x[2] << "\t" << x[3] << "\t";
 	        OutStream << v[1] << "\t" << v[2] << "\t" << v[3] << "\t" << commontrajexact.Ekin << "\t" << commonelectrontraj.hemisphere;
-		OutStream << "\t" << commonelectrontraj.aperture << endl;
+		OutStream << "\t" << commonelectrontraj.apertureX << "\t" << commonelectrontraj.apertureY << endl;
 
 	}
 
@@ -492,14 +492,11 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		if( commonelectrontraj.MonteCarlo ){ //for monte carlo, check if particle went through aperture or not
 			if( x[3] >= -0.3 && ZatApert == 0 ){ //for MonteCarlo, we get Aperture size by the global values ApertGridX/Y
 				ZatApert = 1;
-				// now we check if the particle at that specific z is inside of aperture or outside, we don't consider apertshifts yet!!
-				if(fabs( x[1]) < commonelectrontraj.ApertGridX/2. && fabs( x[2] - commonelectrontraj.R_1)  < commonelectrontraj.ApertGridY/2.){
-					commonelectrontraj.aperture = 1;
-				}
-				else{
-					commonelectrontraj.aperture = -1;
-					break; //we don't track it further
-				}
+				
+				//and now we write out the X and Y coordinate at the aperture position so that in the data analysis, we can make our own aperture cut
+				commonelectrontraj.apertureX = x[1];
+				commonelectrontraj.apertureY = x[2];
+			
 			}
 		}
 

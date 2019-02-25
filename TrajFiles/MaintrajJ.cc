@@ -320,7 +320,6 @@ int main(int argc, char ** argv, char* envp[])
         cout << endl << "TRAJ: MonteCarlo Data" << endl << endl;
         counter = 0;
 	commonelectrontraj.hemisphere = 1;
-	commonelectrontraj.aperture =1;
 	OutStringStream.str("");
 	ofstream MonteCarloOut;
         double buffer1, buffer2, buffer3;
@@ -329,7 +328,7 @@ int main(int argc, char ** argv, char* envp[])
 	commonelectrontraj.ApertGridX = ApertX;
 	commonelectrontraj.ApertGridY = ApertY;
 
-	double ApertExpander = 0.017*4; // how much the aperture is assumed larger for starting positions
+	double ApertExpander = 0.016*4; // how much the aperture is assumed larger for starting positions
 	
 	//random number initialization
 	random_device r;
@@ -368,7 +367,7 @@ int main(int argc, char ** argv, char* envp[])
 		conclusionfilename = OutStringStream.str(); // conclusionfilename is just reused here for opening the files
 		MonteCarloOut.open(conclusionfilename.c_str(),ios::app);
 		// Header
-		MonteCarloOut << "XStart" << "\t" << "YStart" << "\t" << "ZStart" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "vx" << "\t" << "vy" << "\t" << "vz" << "\t" << "Ekin" << "\t" << "hemi" <<"\t" << "apert" <<  endl;
+		MonteCarloOut << "XStart" << "\t" << "YStart" << "\t" << "ZStart" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "vx" << "\t" << "vy" << "\t" << "vz" << "\t" << "Ekin" << "\t" << "hemi" <<"\t" << "apertX" << "\t" << "apertY" <<  endl;
 	
 
 	        while ( MonteCarloData.good() ){
