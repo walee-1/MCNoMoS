@@ -21,7 +21,7 @@ struct typeelectrontraj{
         double Errenergy;       // Energy error [eV]
         double Time;            // particle flight time [s]
 	int hemisphere;
-	int apertureX, apertureY;
+	double apertureX, apertureY;
     // Parameters of the starting disk = source of the particles representing an appertur or a beam
         double Xstart, ApertGridX;          // x-coordinat of the starting disk center [m]
         double Ystart, ApertGridY;          // y-coordinat of the starting disk center [m]
@@ -40,6 +40,7 @@ struct typeelectrontraj{
 	bool MonteCarlo;
 	bool PercOn;
 	bool G4Compare;
+	bool Envelope;
     // simulation settings:
         int numstepmax;         // maximum number of Runge-Kutta steps
         double Timemax;         // Maximal time [s]
@@ -85,6 +86,8 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 	double CrossP[4], CrossPL, GuidX[4], GuidB[4];
 	double sign;
 	
+
+
 	// COMPARE WITH BLINES
 	if( commonelectrontraj.CompareWBlines ){
 		

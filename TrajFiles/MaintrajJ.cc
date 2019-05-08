@@ -61,6 +61,7 @@ int main(int argc, char ** argv, char* envp[])
 	commonelectrontraj.CompareWBlines = myconfig.pBool("CompareWBlines");
 	commonelectrontraj.MonteCarlo = myconfig.pBool("MonteCarloData");
 	commonelectrontraj.G4Compare = myconfig.pBool("G4Compare");
+	commonelectrontraj.Envelope = myconfig.pBool("Envelope");
 	string particle = myconfig.pString("particle");
 	N = myconfig.pInt("ParticleN");
 	double apertYshift = myconfig.pDouble("apertYshift");
@@ -328,8 +329,9 @@ int main(int argc, char ** argv, char* envp[])
 	commonelectrontraj.ApertGridX = ApertX;
 	commonelectrontraj.ApertGridY = ApertY;
 
-	double ApertExpander = 0.016*4; // how much the aperture is assumed larger for starting positions
+	double ApertExpander = 0.015*4; // how much the aperture is assumed larger for starting positions
 	
+	int MCDataFile = myconfig.pInt("MCDataFile");
 	//random number initialization
 	random_device r;
 	seed_seq seed{r(),r(),r(),r(),r(),r(),r(),r()};
@@ -353,73 +355,133 @@ int main(int argc, char ** argv, char* envp[])
       
 	// now we loop over the single files starting with 0
 	// or 1 in the mean while (first 10^5 is already done. now in single files!
-	for(int nr=2;nr<100;nr++){
+	int nr = MCDataFile;
+	//for(int nr=3;nr<100;nr++){ //we dont loop over all the files but we select one file in the config file!
 
-		filenr.str(""); // clearing the stringstream before each iteration
-		filenr << nr;
-		SpectraNr= "Spectra1e5_" + filenr.str() + "_filtered.txt";
-	        MonteCarloData.open( (SpectraDir+SpectraNr).c_str() ,ios::in);
-		cout << "MonteCarloBUG: Opened File = " << (SpectraDir+SpectraNr).c_str() << endl;
+	filenr.str(""); // clearing the stringstream before each iteration
+	filenr << nr;
+	SpectraNr= "Spectra1e5_" + filenr.str() + "_filtered.txt";
+	MonteCarloData.open( (SpectraDir+SpectraNr).c_str() ,ios::in);
+	cout << "MonteCarloBUG: Opened File = " << (SpectraDir+SpectraNr).c_str() << endl;
 	
-		// now make different output file for each 10^5 package
-		OutStringStream.str(""); // clearing
-		OutStringStream << commonelectrontraj.filepath << "MonteCarlo/"  << "DetectorData"+ filenr.str() +".txt";
-		conclusionfilename = OutStringStream.str(); // conclusionfilename is just reused here for opening the files
-		MonteCarloOut.open(conclusionfilename.c_str(),ios::app);
-		// Header
-		MonteCarloOut << "XStart" << "\t" << "YStart" << "\t" << "ZStart" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "vx" << "\t" << "vy" << "\t" << "vz" << "\t" << "Ekin" << "\t" << "hemi" <<"\t" << "apertX" << "\t" << "apertY" <<  endl;
+	// now make different output file for each 10^5 package
+	OutStringStream.str(""); // clearing
+	OutStringStream << commonelectrontraj.filepath << "MonteCarlo/"  << "DetectorData"+ filenr.str() +".txt";
+	conclusionfilename = OutStringStream.str(); // conclusionfilename is just reused here for opening the files
+	MonteCarloOut.open(conclusionfilename.c_str(),ios::app);
+	// Header
+	MonteCarloOut << "XStart" << "\t" << "YStart" << "\t" << "ZStart" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "vx" << "\t" << "vy" << "\t" << "vz" << "\t" << "Ekin" << "\t" << "hemi" <<"\t" << "apertX" << "\t" << "apertY" <<  endl;
 	
 
-	        while ( MonteCarloData.good() ){
-	    	    cout << endl << "TRAJ: Decay#: " << counter << endl;	    
-	    	    counter ++;
+	while ( MonteCarloData.good() ){
+	    cout << endl << "TRAJ: Decay#: " << counter << endl;	    
+	    counter ++;
 	
-		    if ( particle == "e" ){ // if electron, take second part of data, else the first part for proton
-	            	MonteCarloData >> buffer1 >> buffer2 >> buffer3 >> commonelectrontraj.thetaStartmax >> commonelectrontraj.Startphi >> commonelectrontraj.Ekin;
-		    }
-		    else{
-	            	MonteCarloData >> commonelectrontraj.thetaStartmax >> commonelectrontraj.Startphi >> commonelectrontraj.Ekin >> buffer1 >> buffer2 >> buffer3 ;
-		    }
+	    if ( particle == "e" ){ // if electron, take second part of data, else the first part for proton
+	    	MonteCarloData >> buffer1 >> buffer2 >> buffer3 >> commonelectrontraj.thetaStartmax >> commonelectrontraj.Startphi >> commonelectrontraj.Ekin;
+	    }
+	    else{
+	    	MonteCarloData >> commonelectrontraj.thetaStartmax >> commonelectrontraj.Startphi >> commonelectrontraj.Ekin >> buffer1 >> buffer2 >> buffer3 ;
+	    }
 	
-		    commonelectrontraj.hemisphere = 1;
-		    if( commonelectrontraj.thetaStartmax >= 90. ){
-			    commonelectrontraj.thetaStartmax = 180. - commonelectrontraj.thetaStartmax;
-			    commonelectrontraj.hemisphere = -1;
-		    }
+	    commonelectrontraj.hemisphere = 1;
+	    if( commonelectrontraj.thetaStartmax >= 90. ){
+		    commonelectrontraj.thetaStartmax = 180. - commonelectrontraj.thetaStartmax;
+		    commonelectrontraj.hemisphere = -1;
+	    }
 	
-		    // if theta is greater than 45°, filter will reflect -> cutoff
-		    if( commonelectrontraj.thetaStartmax < 45. ){
-		
-			commonelectrontraj.Startphi = commonelectrontraj.Startphi/180.*M_PI;
-			commonelectrontraj.thetaStartmax = commonelectrontraj.thetaStartmax /180. * M_PI;
-			commonelectrontraj.Ekin *=1000.; // from keV to eV!
-		   	
-
-			// now we still have to random variate the starting position, we choose a bigger window than the aperture to see the full edge effect
-				
-
-			commonelectrontraj.Ystart= commonelectrontraj.R_1 + apertYshift + (ApertY+ApertExpander)/2. * dist(eng); //dist(eng) gives numb between -1 and 1 for selection of aperture position
-			commonelectrontraj.Xstart= apertXshift+ (ApertX+ApertExpander)/2. * dist(eng); 
-			//Zstart left constant as defined in beginning of main, for now
-
-	           	trajelectronN(conclusionfilename,1,0., MonteCarloOut ); //filenam, N, startgyraR, apertYshift,apertXshift
+	    // if theta is greater than 45°, filter will reflect -> cutoff
+	    if( commonelectrontraj.thetaStartmax < 45. ){
 	
-		    }
-		    else cout << "MonteCarloBug: theta > 45" << endl;
-	            
+		commonelectrontraj.Startphi = commonelectrontraj.Startphi/180.*M_PI;
+		commonelectrontraj.thetaStartmax = commonelectrontraj.thetaStartmax /180. * M_PI;
+		commonelectrontraj.Ekin *=1000.; // from keV to eV!
+	   	
 
-	        } //closing the while loop
+		// now we still have to random variate the starting position, we choose a bigger window than the aperture to see the full edge effect
+			
+
+		commonelectrontraj.Ystart= commonelectrontraj.R_1 + apertYshift + (ApertY+ApertExpander)/2. * dist(eng); //dist(eng) gives numb between -1 and 1 for selection of aperture position
+		commonelectrontraj.Xstart= apertXshift+ (ApertX+ApertExpander)/2. * dist(eng); 
+		//Zstart left constant as defined in beginning of main, for now
+
+	   	trajelectronN(conclusionfilename,1,0., MonteCarloOut ); //filenam, N, startgyraR, apertYshift,apertXshift
 	
-		MonteCarloOut.close();
-		MonteCarloData.close();
+	    }
+	    else cout << "MonteCarloBug: theta > 45" << endl;
+	    
 
-	}// for loop closing of single monte carlo files
+	} //closing the while loop
+	
+	MonteCarloOut.close();
+	MonteCarloData.close();
+
+	//}// for loop closing of single monte carlo files
 
 		//dont forget to close the file streams
 		//
 		//
 
     }//closing monte carlo simulations
+
+
+//////////////////////////
+// Detector Envelop tracking
+// /////////////////////////
+//
+
+	if(commonelectrontraj.Envelope){
+
+		// we fix the decay point in each corner, change up phi, momentum
+
+		commonelectrontraj.theta_fix = 1; //we set the angle in a loop
+		// Radius of starting disk in [m]:
+		commonelectrontraj.Rstartmax=0.000001;
+        	commonelectrontraj.typeprint=0;
+	
+		//OutStringStream.str("");
+		//OutStringStream << commonelectrontraj.filepath << "MonteCarlo/"  << "DetectorData"+ filenr.str() +".txt";
+		//conclusionfilename = OutStringStream.str(); // conclusionfilename is just reused here for opening the files
+		//MonteCarloOut.open(conclusionfilename.c_str(),ios::app);
+
+		pmin = myconfig.pDouble("PMIN");
+		pmax = myconfig.pDouble("PMAX");
+		int pstepN = 8;
+		double pstep = (pmax - pmin)/(double)pstepN;
+
+		double thetamax = myconfig.pDouble("thetamax")/180.*M_PI;
+
+	
+		// left lower corner (against drift - drift negative, multiple energies)
+		commonelectrontraj.Xstart = ApertX/2.;
+		commonelectrontraj.Ystart = -ApertY/2.;
+		commonelectrontraj.thetaStartmax = thetamax;
+
+		double phistart = 270/180.*M_PI;
+		double phiend = M_PI;
+		double phistepp = 45/180*M_PI;
+
+	    	for(int phii = 0;phii<3;phii++){//phi loop, here we have to think, which phi represents the correct guiding center positions. we hope, phi starts from x axis
+			
+			commonelectrontraj.Startphi = phistart -(double)phii*phistepp;
+			
+			for(int pi = 0; pi<pstepN;pi++){
+
+
+			commonelectrontraj.Ekin = EfromP(pmin*1000. + pi*pstep*1000.);
+
+
+
+			}
+		
+
+		}//phi end loop
+
+	}//envelope end
+
+
+
+
 
 
 

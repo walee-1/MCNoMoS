@@ -504,6 +504,7 @@ int main(int argc,char** argv, char* envp[] )
 		double edge_area = copper_edge_radius*copper_edge_radius*(4. - M_PI);
 		double copper_area = conduct_s*conduct_s - water_dia*water_dia/4*M_PI - edge_area;
 		
+		//cout << "PowerBug: copper area: " << copper_area << endl;
 		//cout << "EL-POWER: Copper area = " << copper_area << endl;
 		//cooling(r_coil,t_coil_RxB,l_coil_RxB,RxB_l*RxB_b,N_coil,water_dia,copper_area);
 		double elecpowersum[13];

@@ -5,5 +5,6 @@ double elecPower(double innerR, double outerR, double current, int turns, double
 	double resistance = copper_res*conductor_length/copper_area;
 	double power = resistance*current*current;
 	
+	//cout << "PowerBug: conductorl, res, power " << conductor_length << "\t" << resistance << "\t" << power << endl;
 	return power;
 }
