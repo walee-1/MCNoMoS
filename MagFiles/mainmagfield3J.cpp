@@ -82,7 +82,6 @@ int main(int argc,char** argv, char* envp[] )
 	double perc_sol_scale = myconfig.pDouble("perc_sol_scale");
 	double perc_filter_scale = myconfig.pDouble("perc_filter_scale");
 	double perc_connec_scale = myconfig.pDouble("perc_connec_scale");
-	double perclastcoil_toflansch = myconfig.pDouble("PERClastcoil_to_flansch");
 	int NoMoSOn = myconfig.pBool("NoMoSOn");
 	string Conductor = myconfig.pString("Conductor");
 	double conduct_s = myconfig.pDouble("conduct_s");
@@ -845,7 +844,7 @@ int main(int argc,char** argv, char* envp[] )
 		gate_begin = connec_end; 
 	        starting_point[1] = 0.;
 	        starting_point[2] = R_1+ helm_r_shift;
-	        starting_point[3] = gate_begin -l_coil_gc_connec - pipe_dist- l_coil_pg_connec - screw_dist -l_coil_pp_connec - PERClastcoil_to_flansch;
+	        starting_point[3] = gate_begin -l_coil_gc_connec - pipe_dist- l_coil_pg_connec - screw_dist -l_coil_pp_connec - PERClastcoil_to_flansch- flansch_perc_thick;
 
 
 	        if (Perc_coordinatsystem == 0) {PERC_to_normal_coordinat_transform(starting_point);}
