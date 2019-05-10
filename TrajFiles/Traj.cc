@@ -348,7 +348,7 @@ void trajelectron1(double *x, double *v, int& electronindex){
 	
 	double zdetwAlpha = commonelectrontraj.R_1*cos((commonelectrontraj.alpha-90.)/180.*M_PI) + commonelectrontraj.zdetector*sin((commonelectrontraj.alpha-90.)/180.*M_PI);
 	double ydetwAlpha = -commonelectrontraj.R_1*sin((commonelectrontraj.alpha-90.)/180.*M_PI) + commonelectrontraj.zdetector*cos((commonelectrontraj.alpha-90.)/180.*M_PI);
-
+	//cout << "TRAJBUG: zdetwAlpha = " << zdetwAlpha << ydetwAlpha << endl;
 
 	commontrajexact.filepath = commonelectrontraj.filepath;
 	// Starting of Runge-Kutta loop:
@@ -429,10 +429,27 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		// Detector break (includes PERConly, detector set differently, without y restriction)
 		if(commonelectrontraj.NoMoSOn == true){
 			// Nomos detector break
-			if(x[3] < zdetwAlpha && x[2] < ydetwAlpha){
-				electronindex=5;        // particle reached the detector
-				cout << "NOMOS det reached" << endl;
-				break;                  // stop trajacking
+			// we distinguish between 180, 90 ° and inbetween
+			if(commonelectrontraj.alpha == 180.){
+				if(x[3] <= commonelectrontraj.zdetector && x[2] < 0.){
+					electronindex=5;        // particle reached the detector
+					cout << "NOMOS det reached" << endl;
+					break;                  // stop trajacking
+				}
+			}
+			else if(commonelectrontraj.alpha == 90.){
+				if( x[2] <= commonelectrontraj.zdetector){
+					electronindex=5;        // particle reached the detector
+					cout << "NOMOS det reached" << endl;
+					break;                  // stop trajacking
+				}
+			}
+			else{
+				if(x[3] <= zdetwAlpha && x[2] <= ydetwAlpha){
+					electronindex=5;        // particle reached the detector
+					cout << "NOMOS det reached" << endl;
+					break;                  // stop trajacking
+				}
 			}
 		}
 		else{
@@ -445,12 +462,13 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		}
 		
 		// break if hit the wall in Perc
-		if(x[3] <  -1. && (fabs(x[2] - 1) >  0.5 || fabs(x[1]) > 0.5)){   
+		if(x[3] <  -3. && (fabs(x[2] - 1) >  0.5 || fabs(x[1]) > 0.5)){   
 		    	cout << "PERC WALL BREAK" << endl;
 			electronindex=6;        // particle left the
 		    	break;
 		}
 		
+
 		// Z, R: z and r coordinates in m:  << setw(10) << Z << (10) << R
 		// b: magnetic field absolute value in T
 		// Phi: electric potential in V
@@ -510,6 +528,10 @@ void trajelectron1(double *x, double *v, int& electronindex){
 
 	}
 
+		
+	//cout << "end z" << x[3] << endl;
+	
+	
 	return;
 }
 
