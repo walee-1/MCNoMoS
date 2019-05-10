@@ -36,6 +36,7 @@ struct typeelectrontraj{
 	bool NoMoSOn;
     // NoMoS parameters:
         double R_1;             // radius of the spectrometer
+	double alpha;
 	bool CompareWBlines;
 	bool MonteCarlo;
 	bool PercOn;
@@ -345,6 +346,10 @@ void trajelectron1(double *x, double *v, int& electronindex){
 	commonelectrontraj.Errenergy=0.;    // energy error [eV]
 	commonelectrontraj.Time=0.;         // particle flight time [s]
 	
+	double zdetwAlpha = R_1*cos((alpha-90.)/180.*M_PI) + commonelectrontraj.zdetector*sin((alpha-90.)/180.*M_PI);
+	double ydetwAlpha = -R_1*sin((alpha-90.)/180.*M_PI) + commonelectrontraj.zdetector*cos((alpha-90.)/180.*M_PI);
+
+
 	commontrajexact.filepath = commonelectrontraj.filepath;
 	// Starting of Runge-Kutta loop:
 	for(istep=1; istep<=commonelectrontraj.numstepmax; istep++){
@@ -415,16 +420,16 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		}
 		
 		//Nomos break, assuming a 300 tube radius!
-		if(x[3]>0. && pow((sqrt(x[2]*x[2]+x[3]*x[3])-commonelectrontraj.R_1),2)+x[1]*x[1] > 0.15*0.15){
-			cout << "NOMOS WALL BREAK" << endl;
-			electronindex=4;        // particle hit the RxB tube
-			break;                  // stop trajacking
-		}
+		//if(x[3]>0. && pow((sqrt(x[2]*x[2]+x[3]*x[3])-commonelectrontraj.R_1),2)+x[1]*x[1] > 0.15*0.15){
+		//	cout << "NOMOS WALL BREAK" << endl;
+		//	electronindex=4;        // particle hit the RxB tube
+		//	break;                  // stop trajacking
+		//}
 		
 		// Detector break (includes PERConly, detector set differently, without y restriction)
 		if(commonelectrontraj.NoMoSOn == true){
 			// Nomos detector break
-			if(x[3] <  commonelectrontraj.zdetector && x[2] <  0.){
+			if(x[3] < zdetwAlpha && x[2] < ydetwAlpha){
 				electronindex=5;        // particle reached the detector
 				cout << "NOMOS det reached" << endl;
 				break;                  // stop trajacking

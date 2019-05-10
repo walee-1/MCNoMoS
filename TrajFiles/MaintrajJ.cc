@@ -72,6 +72,7 @@ int main(int argc, char ** argv, char* envp[])
 	ApertX = myconfig.pDouble("ApertX");
 	ApertY = myconfig.pDouble("ApertY");
 	double detpos = myconfig.pDouble("detpos");
+	commonelectrontraj.alpha = myconfig.pDouble("alpha");
 	
 	int lines;
 	if(onlyCornerCenter == true) lines =5;
