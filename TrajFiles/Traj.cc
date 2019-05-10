@@ -346,8 +346,8 @@ void trajelectron1(double *x, double *v, int& electronindex){
 	commonelectrontraj.Errenergy=0.;    // energy error [eV]
 	commonelectrontraj.Time=0.;         // particle flight time [s]
 	
-	double zdetwAlpha = R_1*cos((alpha-90.)/180.*M_PI) + commonelectrontraj.zdetector*sin((alpha-90.)/180.*M_PI);
-	double ydetwAlpha = -R_1*sin((alpha-90.)/180.*M_PI) + commonelectrontraj.zdetector*cos((alpha-90.)/180.*M_PI);
+	double zdetwAlpha = commonelectrontraj.R_1*cos((commonelectrontraj.alpha-90.)/180.*M_PI) + commonelectrontraj.zdetector*sin((commonelectrontraj.alpha-90.)/180.*M_PI);
+	double ydetwAlpha = -commonelectrontraj.R_1*sin((commonelectrontraj.alpha-90.)/180.*M_PI) + commonelectrontraj.zdetector*cos((commonelectrontraj.alpha-90.)/180.*M_PI);
 
 
 	commontrajexact.filepath = commonelectrontraj.filepath;
