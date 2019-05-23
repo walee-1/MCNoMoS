@@ -21,7 +21,7 @@ struct typeelectrontraj{
         double Errenergy;       // Energy error [eV]
         double Time;            // particle flight time [s]
 	int hemisphere;
-	double apertureX, apertureY;
+	bool HitApertFlag;
     // Parameters of the starting disk = source of the particles representing an appertur or a beam
         double Xstart, ApertGridX;          // x-coordinat of the starting disk center [m]
         double Ystart, ApertGridY;          // y-coordinat of the starting disk center [m]
@@ -30,6 +30,7 @@ struct typeelectrontraj{
         double thetaStartmax;   // maximal emission angle of particles in forward direction [rad]
         int theta_fix;          // = 0: theta <= thetaStartmax,  =1: theta = thetaStartmax
 	double Startphi;
+	double ApertShiftX, ApertShiftY;
     // Detector positions:
         double zdetector;       // axial position of the detector
         double Zend;            // maximal z position
@@ -200,7 +201,7 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 		
 		OutStream << commonelectrontraj.Xstart << "\t"<< commonelectrontraj.Ystart << "\t" << commonelectrontraj.Zstart << "\t"  << x[1] << "\t" << x[2] << "\t" << x[3] << "\t";
 	        OutStream << v[1] << "\t" << v[2] << "\t" << v[3] << "\t" << commontrajexact.Ekin << "\t" << commonelectrontraj.hemisphere;
-		OutStream << "\t" << commonelectrontraj.apertureX << "\t" << commonelectrontraj.apertureY << endl;
+		OutStream << "\t" << commonelectrontraj.HitApertFlag << endl;
 
 	}
 
@@ -519,9 +520,19 @@ void trajelectron1(double *x, double *v, int& electronindex){
 			if( x[3] >= -0.3 && ZatApert == 0 ){ //for MonteCarlo, we get Aperture size by the global values ApertGridX/Y
 				ZatApert = 1;
 				
-				//and now we write out the X and Y coordinate at the aperture position so that in the data analysis, we can make our own aperture cut
-				commonelectrontraj.apertureX = x[1];
-				commonelectrontraj.apertureY = x[2];
+				//we check, if we got through the aperture, if not, we flag and break
+				// ApertGridX and Y are reused for MC as the size of the aperture
+				if	( 
+					commonelectrontraj.ApertShiftX - commonelectrontraj.ApertGridX/2. < x[1] < commonelectrontraj.ApertShiftX + commonelectrontraj.ApertGridX/2. &&
+					commonelectrontraj.R_1 + commonelectrontraj.ApertShiftY - commonelectrontraj.ApertGridY/2. < x[2] < 
+					commonelectrontraj.R_1 + commonelectrontraj.ApertShiftY + commonelectrontraj.ApertGridY/2. 
+					){
+				commonelectrontraj.HitApertFlag = false;
+				}
+				else {
+					commonelectrontraj.HitApertFlag = true;
+					break;
+				}
 			
 			}
 		}

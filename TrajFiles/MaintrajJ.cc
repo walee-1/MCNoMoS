@@ -66,6 +66,8 @@ int main(int argc, char ** argv, char* envp[])
 	N = myconfig.pInt("ParticleN");
 	double apertYshift = myconfig.pDouble("apertYshift");
 	double apertXshift = myconfig.pDouble("apertXshift");
+	commonelectrontraj.ApertShiftX = apertXshift;
+	commonelectrontraj.ApertShiftY = apertYshift;
 	bool onlyCornerCenter = myconfig.pBool("onlyCornerCenter");
 	horilines = myconfig.pInt("horilines");
 	vertilines = myconfig.pInt("vertilines");
@@ -371,7 +373,7 @@ int main(int argc, char ** argv, char* envp[])
 	conclusionfilename = OutStringStream.str(); // conclusionfilename is just reused here for opening the files
 	MonteCarloOut.open(conclusionfilename.c_str(),ios::app);
 	// Header
-	MonteCarloOut << "XStart" << "\t" << "YStart" << "\t" << "ZStart" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "vx" << "\t" << "vy" << "\t" << "vz" << "\t" << "Ekin" << "\t" << "hemi" <<"\t" << "apertX" << "\t" << "apertY" <<  endl;
+	MonteCarloOut << "XStart" << "\t" << "YStart" << "\t" << "ZStart" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "vx" << "\t" << "vy" << "\t" << "vz" << "\t" << "Ekin" << "\t" << "hemi" <<"\t" << "apertFlag"  <<  endl;
 	
 
 	while ( MonteCarloData.good() ){
