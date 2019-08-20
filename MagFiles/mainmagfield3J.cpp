@@ -449,7 +449,9 @@ int main(int argc,char** argv, char* envp[] )
 	i_max[N_coil + n_outlet + n_inlet + 1] = helm2_dens*helm2_scale;
 	
 	// Filter
-	for (int i = N_coil + n_outlet + n_inlet + 2; i < N_coil + n_outlet + n_inlet + 2 + n_filter; i++) {i_max[i] = filterCurrDens*filter_scale;}	
+	if(n_filter > 0){
+		for (int i = N_coil + n_outlet + n_inlet + 2; i < N_coil + n_outlet + n_inlet + 2 + n_filter; i++) {i_max[i] = filterCurrDens*filter_scale;}	
+	}
 	
 // here we adapted quickly the numbers so that we can have 3 NC coils as connectors
 
@@ -673,27 +675,24 @@ int main(int argc,char** argv, char* envp[] )
 		// input: current (vector), start coil number, starting point, direction, curv. Radius (vector), inner R, thickness,coil_length, curve angle, N_coil; filedir,shiftangle
 	    circular_coils_to_inputcoil_dat(i_max, 0, starting_point,direction,starting_point,r_coil,t_coil_RxB,l_coil_RxB,alpha,N_coil, inputcoil_RxB,0.);
 	    
-//		    // OUTLET coil before screw gap
-//	    starting_point[1] = outlet_x_shift;
-//	    starting_point[2] = (R_1+outlet_r_shift)*cos(alpha)-(l_coil_RxB/2.+RxBtoOut_d)*sin(alpha);
-//	    starting_point[3] = (R_1+outlet_r_shift)*sin(alpha)+(l_coil_RxB/2.+RxBtoOut_d)*cos(alpha);
-//	    direction[1] = 0.;
-//	    direction[2] = -sin(alpha);
-//	    direction[3] = cos(alpha);
-//	    if (Perc_coordinatsystem == 0) {PERC_to_normal_coordinat_transform(starting_point, direction);}
-//		// input: current, starting coil number, start P, direction, length, innerR, thick, gap, n_outlet, filedir, reverse direction yes =1
-//	    linear_coils_to_inputcoil_dat(i_max, N_coil, starting_point, direction, l_coil_outlet, outlet_inner, t_coil_outlet, d_outlet, 1, inputcoil_RxB,0);
-
-		    // OUTLET coils after screw gap
+		    // OUTLET coil before screw gap
 	    starting_point[1] = outlet_x_shift;
-	    starting_point[2] = (R_1+outlet_r_shift)*cos(alpha)-(l_coil_RxB/2.+RxBtoOut_d+/*l_coil_outlet+*/outlet_screw_gap)*sin(alpha);
-	    starting_point[3] = (R_1+outlet_r_shift)*sin(alpha)+(l_coil_RxB/2.+RxBtoOut_d+/*l_coil_outlet+*/outlet_screw_gap)*cos(alpha);
+	    starting_point[2] = (R_1+outlet_r_shift)*cos(alpha)-(l_coil_RxB/2.+RxBtoOut_d)*sin(alpha);
+	    starting_point[3] = (R_1+outlet_r_shift)*sin(alpha)+(l_coil_RxB/2.+RxBtoOut_d)*cos(alpha);
 	    direction[1] = 0.;
 	    direction[2] = -sin(alpha);
 	    direction[3] = cos(alpha);
 	    if (Perc_coordinatsystem == 0) {PERC_to_normal_coordinat_transform(starting_point, direction);}
 		// input: current, starting coil number, start P, direction, length, innerR, thick, gap, n_outlet, filedir, reverse direction yes =1
-	    linear_coils_to_inputcoil_dat(i_max, N_coil/*+1*/, starting_point, direction, l_coil_outlet, outlet_inner, t_coil_outlet, d_outlet, n_outlet/*-1*/, inputcoil_RxB,0);
+	    linear_coils_to_inputcoil_dat(i_max, N_coil, starting_point, direction, l_coil_outlet, outlet_inner, t_coil_outlet, d_outlet, 1, inputcoil_RxB,0);
+
+		    // OUTLET coils after screw gap
+	    starting_point[1] = outlet_x_shift;
+	    starting_point[2] = (R_1+outlet_r_shift)*cos(alpha)-(l_coil_RxB/2.+RxBtoOut_d+l_coil_outlet+outlet_screw_gap)*sin(alpha);
+	    starting_point[3] = (R_1+outlet_r_shift)*sin(alpha)+(l_coil_RxB/2.+RxBtoOut_d+l_coil_outlet+outlet_screw_gap)*cos(alpha);
+	    if (Perc_coordinatsystem == 0) {PERC_to_normal_coordinat_transform(starting_point, direction);}
+		// input: current, starting coil number, start P, direction, length, innerR, thick, gap, n_outlet, filedir, reverse direction yes =1
+	    linear_coils_to_inputcoil_dat(i_max, N_coil+1, starting_point, direction, l_coil_outlet, outlet_inner, t_coil_outlet, d_outlet, n_outlet-1, inputcoil_RxB,0);
 
 		    // OUTLET CORR coils
 	    starting_point[1] = outletCorr_x_shift;
@@ -754,14 +753,15 @@ int main(int argc,char** argv, char* envp[] )
 	    connec_end = starting_point[3] - gate_dist;
 	    if (Perc_coordinatsystem == 0) {PERC_to_normal_coordinat_transform(starting_point);}
 	    linear_coils_to_inputcoil_dat(i_max, N_coil+n_outlet+n_inlet +1, starting_point, direction, l_coil_helm2, helm2_inner, t_coil_helm2,0., 1, inputcoil_RxB,0);
-	    
+	
+	if(n_filter > 0){    
 		// FILTER coils
 	    starting_point[1] = filter_x_shift;
 	    starting_point[2] = R_1 + filter_r_shift;
 	    starting_point[3] = filterinletstartZ + l_coil_filter_inlet/2. - l_coil_filter/2.+filter_z_shift;
 	    if (Perc_coordinatsystem == 0) {PERC_to_normal_coordinat_transform(starting_point);}
 	    linear_coils_to_inputcoil_dat(i_max, N_coil+n_outlet+n_inlet +2 , starting_point,direction, l_coil_filter, filter_inner, t_coil_filter, d_filter, n_filter, inputcoil_RxB,0);
-	
+	}
 	
 
 	    // Connector 1
