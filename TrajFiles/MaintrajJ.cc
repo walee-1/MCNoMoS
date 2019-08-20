@@ -114,13 +114,19 @@ int main(int argc, char ** argv, char* envp[])
 		else{ ystep = ApertY/(double)(vertilines-1);}
 
     		// define start points dependent on apertsize and hori/verti-lines. NOT REAL COORDS. because we use these for the file names!
-    		for(int x=1;x<=horilines; x++){
-    		    for(int y=1;y<=vertilines; y++){
-    		        startP[0][counter]= -ApertX/2. + (x-1)*xstep;
-    		        startP[1][counter]= -ApertY/2. + (y-1)*ystep;
-    		        counter++;
-    		    }
-    		}
+    		if( horilines==1 && vertilines == 1){
+			startP[0][0]=0.;
+			startP[1][0]=0.;
+		}
+		else{
+			for(int x=1;x<=horilines; x++){
+    			    for(int y=1;y<=vertilines; y++){
+    			        startP[0][counter]= -ApertX/2. + (x-1)*xstep;
+    			        startP[1][counter]= -ApertY/2. + (y-1)*ystep;
+    			        counter++;
+    			    }
+    			}
+		}
 	}
 
 
@@ -394,7 +400,7 @@ int main(int argc, char ** argv, char* envp[])
 	    }
 	
 	    // if theta is greater than 45°, filter will reflect -> cutoff
-	    if( commonelectrontraj.thetaStartmax < 45. ){
+	    if( commonelectrontraj.thetaStartmax <= 45. ){
 	
 		commonelectrontraj.Startphi = commonelectrontraj.Startphi/180.*M_PI;
 		commonelectrontraj.thetaStartmax = commonelectrontraj.thetaStartmax /180. * M_PI;
