@@ -60,6 +60,7 @@ int main(int argc, char ** argv, char* envp[])
 	commonelectrontraj.NoMoSOn = myconfig.pBool("NoMoSOn");
 	commonelectrontraj.CompareWBlines = myconfig.pBool("CompareWBlines");
 	commonelectrontraj.MonteCarlo = myconfig.pBool("MonteCarloData");
+	commonelectrontraj.PointSource = myconfig.pBool("PointSource");
 	commonelectrontraj.G4Compare = myconfig.pBool("G4Compare");
 	commonelectrontraj.Envelope = myconfig.pBool("Envelope");
 	string particle = myconfig.pString("particle");
@@ -232,8 +233,9 @@ int main(int argc, char ** argv, char* envp[])
 		psteps = (pmax - pmin)/pstep;
 
 		double thetastep = myconfig.pDouble("thetastep")/180.*M_PI;
+		double thetamin = myconfig.pDouble("thetamin")/180.*M_PI;
 		double thetamax = myconfig.pDouble("thetamax")/180.*M_PI;
-		int thetasteps = thetamax / thetastep;
+		int thetasteps =(int)((thetamax - thetamin) / thetastep);
 		
 		double phistep = myconfig.pDouble("phistep")/180.*M_PI;
 		double phimax = myconfig.pDouble("phimax")/180.*M_PI;
@@ -258,7 +260,7 @@ int main(int argc, char ** argv, char* envp[])
 
 			//angle variation
 			for(int angle_i=0; angle_i<= thetasteps; angle_i++){
-				commonelectrontraj.thetaStartmax = angle_i*thetastep;
+				commonelectrontraj.thetaStartmax = thetamin + angle_i*thetastep;
 				cout << endl << "TRAJ: theta= " << commonelectrontraj.thetaStartmax/M_PI*180. << endl;
 				// energy variation
 				for(int P_i=0; P_i<=psteps; P_i++){
@@ -382,7 +384,7 @@ int main(int argc, char ** argv, char* envp[])
 	MonteCarloOut << "XStart" << "\t" << "YStart" << "\t" << "ZStart" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "vx" << "\t" << "vy" << "\t" << "vz" << "\t" << "Ekin" << "\t" << "hemi" <<"\t" << "apertFlag"  <<  endl;
 	
 
-	while ( MonteCarloData.good() ){
+	while ( MonteCarloData.good() && counter < 50000 ){
 	    cout << endl << "TRAJ: Decay#: " << counter << endl;	    
 	    counter ++;
 	
@@ -589,7 +591,9 @@ int main(int argc, char ** argv, char* envp[])
 		cout << "TRAJ: Compare with G4" << endl;
        
        
-       		// conclusionfilename for simulation conclusion
+		commonelectrontraj.typeprint=0;
+       		
+		// conclusionfilename for simulation conclusion
        		//sprintf(numstr1, "%d", iEkin);
        		sprintf(numstr2, "%d", iRandom);
        		conclusionfilename="ConclusionG4_";
@@ -600,7 +604,7 @@ int main(int argc, char ** argv, char* envp[])
        		conclusionfilename = commonelectrontraj.filepath +"trajectories/"+ conclusionfilename;
        		cout << "TRAJ: Conclusion filename: " << conclusionfilename << endl;
        		ConclusionHeader.open(conclusionfilename.c_str(),ios::out);
-       		ConclusionHeader << "X[m]" << "\t" << "Y[m]" << "\t" << "theta[rad]" <<"\t"<< "Ekin[eV]" <<"\t"<< "phi[rad]" << "\t" << "particle" << "\t" << "part-index" << "\t" << "E-err" << "\t" << "time" << endl;
+       		ConclusionHeader << "X[m]" << "\t" << "Y[m]" << "\t" << "theta[rad]" <<"\t"<< "Ekin[eV]" <<"\t"<< "phi[rad]" << "\t" << "XA[m]" << "\t" << "YA[m]" << "\t" << "ZA[m]"<< "\t" << "XD[m]" << "\t" << "YD[m]" << "\t" << "ZD[m]" << "\t"  << "part-index" << "\t" << "E-err" << "\t" << "time" << endl;
        		ConclusionHeader.close();
        
        
@@ -616,7 +620,8 @@ int main(int argc, char ** argv, char* envp[])
 
 		double thetastep = myconfig.pDouble("thetastep")/180.*M_PI;
 		double thetamax = myconfig.pDouble("thetamax")/180.*M_PI;
-		int thetasteps = thetamax / thetastep;
+		double thetamin = myconfig.pDouble("thetamin")/180.*M_PI;
+		int thetasteps = (int)( (thetamax-thetamin) / thetastep);
 		
 		double phistep = myconfig.pDouble("phistep")/180.*M_PI;
 		double phimax = myconfig.pDouble("phimax")/180.*M_PI;
@@ -633,7 +638,7 @@ int main(int argc, char ** argv, char* envp[])
 			
 			//angle variation
 			for(int angle_i=0; angle_i<= thetasteps; angle_i++){
-				commonelectrontraj.thetaStartmax = angle_i*thetastep;
+				commonelectrontraj.thetaStartmax = thetamin + angle_i*thetastep;
 				cout << endl << "TRAJ: theta= " << commonelectrontraj.thetaStartmax/M_PI*180. << endl;
 				// energy variation
 				for(int P_i=0; P_i<=psteps; P_i++){
@@ -657,6 +662,114 @@ int main(int argc, char ** argv, char* envp[])
 			}
 		}
 	}
+
+
+
+
+    //////////////////////////////////////////////////
+    // Point source MC
+    //////////////////////////////////////////////
+    
+    if( commonelectrontraj.PointSource == true ){
+    
+        cout << endl << "TRAJ: Point Source" << endl << endl;
+        counter = 0;
+	//commonelectrontraj.hemisphere = 1;
+	OutStringStream.str("");
+	ofstream PointSourceOut;
+        double buffer1, buffer2, buffer3;
+	stringstream filenr;
+
+	int MCDataFile = myconfig.pInt("MCDataFile");
+	//random number initialization for phi dicing
+	random_device r;
+	seed_seq seed{r(),r(),r(),r(),r(),r(),r(),r()};
+	mt19937 eng{seed};
+	uniform_real_distribution<double> dist(0.,1.);
+
+	
+	commonelectrontraj.theta_fix = 1;
+        commonelectrontraj.Rstartmax=0.000001;
+        commonelectrontraj.typeprint=0;
+	pmax = myconfig.pDouble("PMAX");
+
+        // read-in from MC
+        ifstream MonteCarloData;
+        string SpectraDir = "/home/dmoser/FerencSource+Spectra/Spectra1e7/";
+
+        string SpectraNr;
+      
+	int nr = MCDataFile;
+
+	filenr.str(""); // clearing the stringstream before each iteration
+	filenr << nr;
+	// we take the unfiltered source because with no filter, angles to 90° are allowed
+	SpectraNr= "Spectra1e5_" + filenr.str() + ".txt";
+	MonteCarloData.open( (SpectraDir+SpectraNr).c_str() ,ios::in);
+	cout << "PointSource: Opened MC File = " << (SpectraDir+SpectraNr).c_str() << endl;
+	
+	// now make different output file for each 10^5 package
+	OutStringStream.str(""); // clearing
+	OutStringStream << commonelectrontraj.filepath << "MonteCarlo/"  << "DetectorData"+ filenr.str() +".txt";
+	conclusionfilename = OutStringStream.str(); // conclusionfilename is just reused here for opening the files
+	PointSourceOut.open(conclusionfilename.c_str(),ios::app);
+	// Header
+	PointSourceOut << "XStart" << "\t" << "YStart" << "\t" << "ZStart" << "\t" << "XA" << "\t" << "YA" << "\t" << "ZA" << "\t" << "xD" << "\t" << "yD" << "\t" << "zD" << "\t"  << "Ekin" << endl;
+	
+
+
+	commonelectrontraj.Ystart= startP[1][0] + commonelectrontraj.R_1 + apertYshift; // we add R_1 in Traj.cc aswellas gyraR
+	commonelectrontraj.Xstart= startP[0][0] + apertXshift; 
+	//Zstart left constant as defined in beginning of main, for now
+	//
+	while ( MonteCarloData.good() ){
+		cout << endl << "TRAJ: Decay#: " << counter << endl;	    
+		counter ++;
+		
+		if ( particle == "e" ){ // if electron, take second part of data, else the first part for proton
+			MonteCarloData >> buffer1 >> buffer2 >> buffer3 >> commonelectrontraj.thetaStartmax >> commonelectrontraj.Startphi >> commonelectrontraj.Ekin;
+		}
+		else{
+			MonteCarloData >> commonelectrontraj.thetaStartmax >> commonelectrontraj.Startphi >> commonelectrontraj.Ekin >> buffer1 >> buffer2 >> buffer3 ;
+		}
+		
+		// we tilt the angles higher than 90°
+		if( commonelectrontraj.thetaStartmax >= 90. ){
+		        commonelectrontraj.thetaStartmax = 180. - commonelectrontraj.thetaStartmax;
+		}
+	
+	
+		commonelectrontraj.Startphi = 2*M_PI*dist(eng);
+		commonelectrontraj.thetaStartmax = commonelectrontraj.thetaStartmax /180. * M_PI;
+	
+		// we overwrite decay energy with pmax as we want fixed energy
+		commonelectrontraj.Ekin = EfromP( pmax*1000. );
+		//commonelectrontraj.Ekin *=1000.; // from keV to eV!
+		
+		
+		// now we still have to random variate the starting position, we choose a bigger window than the aperture to see the full edge effect
+			
+		
+		trajelectronN(conclusionfilename,1,0., PointSourceOut ); //filenam, N, startgyraR, apertYshift,apertXshift
+	    
+
+	} //closing the while loop
+	
+	PointSourceOut.close();
+	MonteCarloData.close();
+
+	//}// for loop closing of single monte carlo files
+
+		//dont forget to close the file streams
+		//
+		//
+
+    }//closing monte carlo simulations
+
+
+
+
+
 
 //
 //	if( !(commonelectrontraj.CompareWBlines) ){

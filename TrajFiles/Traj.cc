@@ -40,6 +40,7 @@ struct typeelectrontraj{
 	double alpha;
 	bool CompareWBlines;
 	bool MonteCarlo;
+	bool PointSource;
 	bool PercOn;
 	bool G4Compare;
 	bool Envelope;
@@ -219,7 +220,7 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 			////////   Writing in CONCLUSION FILE at the start  /////////////////// only for compare with Blines
 		        outfile << commonelectrontraj.ApertGridX << "\t" << commonelectrontraj.ApertGridY;
 		        outfile << "\t" << commonelectrontraj.thetaStartmax << "\t" << commonelectrontraj.Ekin;
-			outfile << "\t" << commonelectrontraj.Startphi << "\t" << ie;
+			outfile << "\t" << commonelectrontraj.Startphi;
 			
 		
 		
@@ -291,11 +292,14 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 			    commonelectrontraj.outfile << commontrajexact.Ekin << setw(16) <<  scientific << 0. << setw(16) << commonelectrontraj.Time << setw(16) << 0. << setw(16) << 0. << endl;
         		}
 		
+
 			// Trajectory calculation:
 			trajelectron1(x,v,electronindex);
 			
+			
 			// Writing further in the CONCLUSION FILE at the end: MS index, energy error, storage time
-			outfile << "\t" << electronindex << "\t" << commonelectrontraj.Errenergy << "\t" << commonelectrontraj.Time << endl;
+			outfile << "\t" << commonelectrontraj.ApertGridX << "\t" << commonelectrontraj.ApertGridY << "\t" << commonelectrontraj.ApertGridZ;
+			outfile << "\t" << x[1] << "\t" << x[2] << "\t" << x[3] << "\t" << electronindex << "\t" << commonelectrontraj.Errenergy << "\t" << commonelectrontraj.Time << endl;
 			outfile.close();
 			
 			// Detailed tracking writing: close file
@@ -306,6 +310,23 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 	} // Compare with G4 if end
 	
 
+	//////////////////////////////
+	// Point source
+	if( commonelectrontraj.PointSource ){
+
+		// Electron generator:
+		electrongeneration(x,v,commonelectrontraj.Startphi);            // sets initial condition for x and v, also phi setable
+		
+		// Trajectory calculation:
+		trajelectron1(x,v,electronindex);
+
+		// trajelectron doesnt write out anything -> now write out last point into the right file
+		
+		OutStream << commonelectrontraj.Xstart << "\t"<< commonelectrontraj.Ystart << "\t" << commonelectrontraj.Zstart;
+	        OutStream << "\t" << commonelectrontraj.ApertGridX << "\t" << commonelectrontraj.ApertGridY << "\t" << commonelectrontraj.ApertGridZ;
+		OutStream << "\t" << x[1] << "\t" << x[2] << "\t" << x[3] << "\t" << commontrajexact.Ekin << endl;
+
+	}
 
 	return;
 }
@@ -414,7 +435,7 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		} 
 		
 		// particle was reflected
-		if( x[3] <  commonelectrontraj.Zstart - 0.1 ){
+		if( x[3] <  commonelectrontraj.Zstart - 0.1 && x[2] > 0. ){
 		   	cout << "Z Zstart BREAK" << endl;
 			electronindex=3;        // particle left the
 			break;
@@ -434,21 +455,21 @@ void trajelectron1(double *x, double *v, int& electronindex){
 			if(commonelectrontraj.alpha == 180.){
 				if(x[3] <= commonelectrontraj.zdetector && x[2] < 0.){
 					electronindex=5;        // particle reached the detector
-					cout << "NOMOS det reached" << endl;
+					cout << "NOMOS det reached 180" << endl;
 					break;                  // stop trajacking
 				}
 			}
 			else if(commonelectrontraj.alpha == 90.){
 				if( x[2] <= commonelectrontraj.zdetector){
 					electronindex=5;        // particle reached the detector
-					cout << "NOMOS det reached" << endl;
+					cout << "NOMOS det reached 90" << endl;
 					break;                  // stop trajacking
 				}
 			}
 			else{
 				if(x[3] <= zdetwAlpha && x[2] <= ydetwAlpha){
 					electronindex=5;        // particle reached the detector
-					cout << "NOMOS det reached" << endl;
+					cout << "NOMOS det reached ??" << endl;
 					break;                  // stop trajacking
 				}
 			}
@@ -478,7 +499,7 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		// commonelectrontraj.Time: time in s
 
 
-		if(! commonelectrontraj.MonteCarlo ) {
+		if( commonelectrontraj.typeprint==1 ) {
 
 			// calculate guiding center and evaluate guiding center B-field as well
 			V_perpend = sin(acos(costheta)) * V;
@@ -536,6 +557,36 @@ void trajelectron1(double *x, double *v, int& electronindex){
 			
 			}
 		}
+
+
+
+		//	first close point to aperture for G4 compare and Pitch effects
+		if( commonelectrontraj.G4Compare ){ //for monte carlo, check if particle went through aperture or not
+			if( x[3] >= -0.29 && ZatApert == 0 ){ //for MonteCarlo, we get Aperture size by the global values ApertGridX/Y
+				ZatApert = 1;
+				
+				// we write the local coordinate to a free variable that we can write to the conclusion file
+				commonelectrontraj.ApertGridX = x[1];	
+				commonelectrontraj.ApertGridY = x[2];	
+				commonelectrontraj.ApertGridZ = x[3];	
+			}
+		}
+
+
+		// Point Source Aperture write
+		//	first close point to aperture for G4 compare and Pitch effects
+		if( commonelectrontraj.PointSource ){ //for monte carlo, check if particle went through aperture or not
+			if( x[3] >= -0.29 && ZatApert == 0 ){ //for MonteCarlo, we get Aperture size by the global values ApertGridX/Y
+				ZatApert = 1;
+				
+				// we write the local coordinate to a free variable that we can write to the conclusion file
+				commonelectrontraj.ApertGridX = x[1];	
+				commonelectrontraj.ApertGridY = x[2];	
+				commonelectrontraj.ApertGridZ = x[3];	
+			}
+		}
+
+
 
 	}
 
