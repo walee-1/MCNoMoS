@@ -384,7 +384,7 @@ int main(int argc, char ** argv, char* envp[])
 	MonteCarloOut << "XStart" << "\t" << "YStart" << "\t" << "ZStart" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "vx" << "\t" << "vy" << "\t" << "vz" << "\t" << "Ekin" << "\t" << "hemi" <<"\t" << "apertFlag"  <<  endl;
 	
 
-	while ( MonteCarloData.good() && counter < 50000 ){
+	while ( MonteCarloData.good()  ){
 	    cout << endl << "TRAJ: Decay#: " << counter << endl;	    
 	    counter ++;
 	
@@ -722,7 +722,7 @@ int main(int argc, char ** argv, char* envp[])
 	commonelectrontraj.Xstart= startP[0][0] + apertXshift; 
 	//Zstart left constant as defined in beginning of main, for now
 	//
-	while ( MonteCarloData.good() ){
+	while ( MonteCarloData.good() && counter < 50000 ){
 		cout << endl << "TRAJ: Decay#: " << counter << endl;	    
 		counter ++;
 		
