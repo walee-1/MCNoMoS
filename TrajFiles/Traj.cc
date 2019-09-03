@@ -418,7 +418,9 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		if(istep==1)energy0=commontrajexact.energy;   // initilization
 		err=(commontrajexact.energy-energy0)/energy0; // calculation of energy error
 		if(fabs(err)>commonelectrontraj.Errenergy)commonelectrontraj.Errenergy=fabs(err);     // memorize the larges error
-		
+	
+
+
 		// break the loop:
 		// Time break
 		if(istep==commonelectrontraj.numstepmax || commonelectrontraj.Time>commonelectrontraj.Timemax){

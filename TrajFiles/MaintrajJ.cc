@@ -7,6 +7,7 @@
 #include <string>
 #include <sstream>                      // for stringstream
 #include <random>
+#include <time.h>
 
 using namespace std;
 
@@ -687,6 +688,7 @@ int main(int argc, char ** argv, char* envp[])
 	mt19937 eng{seed};
 	uniform_real_distribution<double> dist(0.,1.);
 
+	const clock_t begin_time = clock();
 	
 	commonelectrontraj.theta_fix = 1;
         commonelectrontraj.Rstartmax=0.000001;
@@ -722,7 +724,7 @@ int main(int argc, char ** argv, char* envp[])
 	commonelectrontraj.Xstart= startP[0][0] + apertXshift; 
 	//Zstart left constant as defined in beginning of main, for now
 	//
-	while ( MonteCarloData.good() && counter < 50000 ){
+	while ( MonteCarloData.good() && counter < 20000 ){
 		cout << endl << "TRAJ: Decay#: " << counter << endl;	    
 		counter ++;
 		
@@ -757,6 +759,10 @@ int main(int argc, char ** argv, char* envp[])
 	
 	PointSourceOut.close();
 	MonteCarloData.close();
+
+
+	std::cout << "Time used by PointSourceMC: " << float( clock () - begin_time ) /  CLOCKS_PER_SEC / 3600. << endl;
+
 
 	//}// for loop closing of single monte carlo files
 

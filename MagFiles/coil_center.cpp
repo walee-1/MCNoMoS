@@ -7,7 +7,7 @@ void coil_center(double R_1, double angle, double start_pos, double bend_start, 
 	
 	// Adjustable:
 	double lin_step_size = 10e-3;     // point distance in [m]
-	int angle_steps = 1000;
+	int angle_steps = 500;
 	double angle_step_size = angle/(double)(angle_steps);
 
 	// calc startpoints
