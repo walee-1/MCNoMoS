@@ -1,5 +1,7 @@
 #include <stdio.h>
+#define _USE_MATH_DEFINES
 #include <math.h>
+#include <cmath>
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
@@ -19,7 +21,6 @@ using namespace std;
 #define Nspmax 2000
 #define nmaxmag 4000 // 500
 #define Nspmagmax 3000
-#define _USE_MATH_DEFINES
 
 
 #include "Traj.cc"
@@ -77,13 +78,14 @@ int main(int argc, char ** argv, char* envp[])
 	ApertY = myconfig.pDouble("ApertY");
 	double detpos = myconfig.pDouble("detpos");
 	commonelectrontraj.alpha = myconfig.pDouble("alpha");
+	string PCName = myconfig.pString("PCName");
 	
 	int lines;
 	if(onlyCornerCenter == true) lines =5;
 	else lines = horilines*vertilines;
 
-	double startP[2][lines];
-	ofstream OutStream[lines];
+	double startP[2][9];
+	ofstream OutStream[9];
     	stringstream OutStringStream;
 	int counter = 0;
 
@@ -361,7 +363,10 @@ int main(int argc, char ** argv, char* envp[])
 	//here we loop over the single partial files of the generated spectrum with increasing index
         // read-in from MC
         ifstream MonteCarloData;
-        string SpectraDir = "/home/dmoser/FerencSource+Spectra/Spectra1e7/";
+        string SpectraDir;
+        if( PCName == "Daniel" ) SpectraDir = "/home/dmoser/FerencSource+Spectra/Spectra1e7/";
+	else if( PCName == "Waleed" ) SpectraDir = "C:/Users/Waleed/Desktop/MC/FerencSource+Spectra/Spectra1e7";
+	else if( PCName == "Gertrud" ) SpectraDir = "C:/Users/smi/Desktop/MC/FerencSource+Spectra/Spectra1e7";
 
         string SpectraNr;
       
@@ -697,9 +702,14 @@ int main(int argc, char ** argv, char* envp[])
 
         // read-in from MC
         ifstream MonteCarloData;
-        string SpectraDir = "/home/dmoser/FerencSource+Spectra/Spectra1e7/";
-
-        string SpectraNr;
+        
+	string SpectraDir;
+        if( PCName == "Daniel" ) SpectraDir = "/home/dmoser/FerencSource+Spectra/Spectra1e7/";
+	else if( PCName == "Waleed" ) SpectraDir = "C:/Users/Waleed/Desktop/MC/FerencSource+Spectra/Spectra1e7";
+	else if( PCName == "Gertrud" ) SpectraDir = "C:/Users/smi/Desktop/MC/FerencSource+Spectra/Spectra1e7";
+        
+	
+	string SpectraNr;
       
 	int nr = MCDataFile;
 
@@ -724,7 +734,7 @@ int main(int argc, char ** argv, char* envp[])
 	commonelectrontraj.Xstart= startP[0][0] + apertXshift; 
 	//Zstart left constant as defined in beginning of main, for now
 	//
-	while ( MonteCarloData.good() && counter < 20000 ){
+	while ( MonteCarloData.good() && counter < 50000 ){
 		cout << endl << "TRAJ: Decay#: " << counter << endl;	    
 		counter ++;
 		
