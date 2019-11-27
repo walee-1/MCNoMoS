@@ -23,7 +23,7 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 	double P_new[4], diff_vec[4];
    double RxB_vec[4], RxB_vec_new[4];
 	double v1st_A, v1st_B;
-	double b, b_old, b_new, R_A, R_B, startB;
+	double b, b_old, b_new, R_A=0., R_B, startB;
 	double angle;
 	double drift1st, denomi;
 	int max_coord;
@@ -31,7 +31,7 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 
 	
 	// Adjustable:
-	double step_size = 5.e-4;  // point distance in [m]
+	double step_size = 1.e-3;  // point distance in [m]
 	int n_loops = 10;         // number of loops, when values are written
 	int i_loop;	
 
@@ -144,7 +144,9 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 	      			// store the datapoint's position
 		      		fileout << P[1] <<"\t"<< P[2]<<"\t"<< P[3];
 		      		// store the B-field values in the datapoint
-	      			fileout <<"\t"<< b <<"\t"<< B[1] <<"\t"<< B[2] <<"\t"<< B[3] << "\t" << angle << "\n" ;
+	      			fileout <<"\t"<< b <<"\t"<< B[1] <<"\t"<< B[2] <<"\t"<< B[3] << "\t" << angle;
+			       	if(driftOn == 2) fileout << "\t" << R_A	<< "\n";
+				else fileout << "\n";
 				i_loop = 0;
 			} else {i_loop++;}
 			

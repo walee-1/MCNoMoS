@@ -92,6 +92,7 @@ int main(int argc,char** argv, char* envp[] )
 	double flansch_perc_thick = myconfig.pDouble("flansch_perc_thick");
 	double fieldmap_step = myconfig.pDouble("fieldmap_step");
 	double manualStartZ = myconfig.pDouble("manualStartZ");
+	bool boolManualStartZ = myconfig.pBool("boolManualStartZ");
 
 	// RxB Parameter
 	int RxB_l = myconfig.pInt("RxB_l");
@@ -630,8 +631,8 @@ int main(int argc,char** argv, char* envp[] )
 
 		}
 
-		//now we overwrite this, in case we want a manual Z start (if manualStartZ >0, use upper definitions, otherwise manualStartZ)
-		if( manualStartZ < 0. ) blineStartZ = manualStartZ;
+		//now we overwrite this, in case we want a manual Z start
+		if( boolManualStartZ ) blineStartZ = manualStartZ;
 
 		configinfo << "blineStartZ" << "\t" << blineStartZ << endl;
 	}// if on, written later, after PERC is built

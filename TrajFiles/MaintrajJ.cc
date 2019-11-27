@@ -312,9 +312,12 @@ int main(int argc, char ** argv, char* envp[])
 							commonelectrontraj.Xstart -= n[1]*StartgyraR;
 							commonelectrontraj.Ystart -= n[2]*StartgyraR;
 							commonelectrontraj.Zstart -= n[3]*StartgyraR;
+
+
 						}
 
 
+						//cout << "TRAJBUG: startP roughly = " << commonelectrontraj.Xstart << "\t" << commonelectrontraj.Ystart << "\t" << commonelectrontraj.Zstart << endl;
 						//last argument is offset of Ystart, so that in filename, gyraR can again be subtracted!	
 						trajelectronN(conclusionfilename,N,StartgyraR,OutStream[line]); 
 					}
