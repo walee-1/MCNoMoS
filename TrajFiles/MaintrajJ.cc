@@ -8,7 +8,7 @@
 #include <iomanip>
 #include <string>
 #include <sstream>                      // for stringstream
-#include <random>
+//#include <random>
 #include <time.h>
 
 using namespace std;
@@ -65,6 +65,7 @@ int main(int argc, char ** argv, char* envp[])
 	commonelectrontraj.PointSource = myconfig.pBool("PointSource");
 	commonelectrontraj.G4Compare = myconfig.pBool("G4Compare");
 	commonelectrontraj.Envelope = myconfig.pBool("Envelope");
+	commonelectrontraj.ClusterMC = myconfig.pBool("ClusterMC");
 	string particle = myconfig.pString("particle");
 	N = myconfig.pInt("ParticleN");
 	double apertYshift = myconfig.pDouble("apertYshift");
@@ -199,9 +200,14 @@ int main(int argc, char ** argv, char* envp[])
 	}
     
 
+
+
+
+
 ////////////// trajectory calcs	///////////////////////////////////
 	
     
+
 //////////////////////////////////////////
 	////// COMPARE traj with Blines /////////
     //////////////////////////////////////
@@ -349,11 +355,16 @@ int main(int argc, char ** argv, char* envp[])
 	double ApertExpander = 0.015*4; // how much the aperture is assumed larger for starting positions
 	
 	int MCDataFile = myconfig.pInt("MCDataFile");
+	
+	// this random number generator needs c++, which we don't have on the cluster. for now, I just code old/bad random number generator
 	//random number initialization
-	random_device r;
-	seed_seq seed{r(),r(),r(),r(),r(),r(),r(),r()};
-	mt19937 eng{seed};
-	uniform_real_distribution<double> dist(-1.,1.);
+	//random_device r;
+	//seed_seq seed{r(),r(),r(),r(),r(),r(),r(),r()};
+	//mt19937 eng{seed};
+	//uniform_real_distribution<double> dist(-1.,1.);
+	double randomnumber;
+
+	
 
 	//
 	//
@@ -419,10 +430,18 @@ int main(int argc, char ** argv, char* envp[])
 	   	
 
 		// now we still have to random variate the starting position, we choose a bigger window than the aperture to see the full edge effect
-			
+		
+		// deprecated random number generator	
+		/* initialize random seed: */
+		srand (time(NULL));
+		randomnumber = rand()%2 -1; // should be a number between -1 and 1
+		commonelectrontraj.Ystart= commonelectrontraj.R_1 + apertYshift + (ApertY+ApertExpander)/2. * randomnumber;
+		srand (time(NULL));
+		randomnumber = rand()%2 -1; // should be a number between -1 and 1
+		commonelectrontraj.Xstart= apertXshift+ (ApertX+ApertExpander)/2. * randomnumber; 
 
-		commonelectrontraj.Ystart= commonelectrontraj.R_1 + apertYshift + (ApertY+ApertExpander)/2. * dist(eng); //dist(eng) gives numb between -1 and 1 for selection of aperture position
-		commonelectrontraj.Xstart= apertXshift+ (ApertX+ApertExpander)/2. * dist(eng); 
+		//commonelectrontraj.Ystart= commonelectrontraj.R_1 + apertYshift + (ApertY+ApertExpander)/2. * dist(eng); //dist(eng) gives numb between -1 and 1 for selection of aperture position
+		//commonelectrontraj.Xstart= apertXshift+ (ApertX+ApertExpander)/2. * dist(eng); 
 		//Zstart left constant as defined in beginning of main, for now
 
 	   	trajelectronN(conclusionfilename,1,0., MonteCarloOut ); //filenam, N, startgyraR, apertYshift,apertXshift
@@ -691,10 +710,10 @@ int main(int argc, char ** argv, char* envp[])
 
 	int MCDataFile = myconfig.pInt("MCDataFile");
 	//random number initialization for phi dicing
-	random_device r;
-	seed_seq seed{r(),r(),r(),r(),r(),r(),r(),r()};
-	mt19937 eng{seed};
-	uniform_real_distribution<double> dist(0.,1.);
+	//random_device r;
+	//seed_seq seed{r(),r(),r(),r(),r(),r(),r(),r()};
+	//mt19937 eng{seed};
+	//uniform_real_distribution<double> dist(0.,1.);
 
 	const clock_t begin_time = clock();
 	
@@ -754,7 +773,8 @@ int main(int argc, char ** argv, char* envp[])
 		}
 	
 	
-		commonelectrontraj.Startphi = 2*M_PI*dist(eng);
+		//commonelectrontraj.Startphi = 2*M_PI*dist(eng);
+		commonelectrontraj.Startphi = commonelectrontraj.Startphi /180. * M_PI;
 		commonelectrontraj.thetaStartmax = commonelectrontraj.thetaStartmax /180. * M_PI;
 	
 		// we overwrite decay energy with pmax as we want fixed energy
@@ -784,6 +804,173 @@ int main(int argc, char ** argv, char* envp[])
 		//
 
     }//closing monte carlo simulations
+
+
+
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    // ClusterMC for endpositions on detector
+    //////////////////////////////////////////////
+    // this is only used on cluster, where we want to only run 1 1e4 file per process to have faster overall calc times and make use of the multiple processors
+    // we give the file number as an argument to the executable and therefore in the bash script on the server
+    
+    if( commonelectrontraj.ClusterMC ){
+    
+        cout << endl << "TRAJ: ClusterMC run" << endl << endl;
+	
+	/////////////MCfile argument//////////////
+	if(argc <4) {cout << "TRAJ: no Sourcefile Integer given!" << endl; return 1;}
+	int MCSourceFile = atoi(argv[3]);
+	cout << "TRAJ: MCFile given: " << MCSourceFile << endl;
+	
+	
+	//we save the aperture size to one existing global value to have it in Traj.cc
+	commonelectrontraj.ApertGridX = ApertX;
+	commonelectrontraj.ApertGridY = ApertY;
+
+	double B_DV[4], B_A[4], testpos[4], n[4], velo[4];
+	double B_DV_abs, B_A_abs;
+	double r_A, sqrt_r_A, v, V_perpend, StartgyraR, gam;
+    	double c=299792458.;  // velocity of light in SI units
+
+	double DVwindow_X, DVwindow_Y;
+	double DVwindow_shiftX, DVwindow_shiftY;
+	
+	//random number initialization
+//	random_device r;
+//	seed_seq seed{r(),r(),r(),r(),r(),r(),r(),r()};
+//	mt19937 eng{seed};
+//	uniform_real_distribution<double> dist(-1.,1.);
+	double randomnumber;
+	srand (time(NULL));
+
+	commonelectrontraj.hemisphere = 1;
+	commonelectrontraj.theta_fix = 1;
+        commonelectrontraj.Rstartmax=0.000001;
+        commonelectrontraj.typeprint=0;
+	
+
+        // read-in from MC
+        ifstream MonteCarloData;
+        string SpectraDir;
+        double buffer1, buffer2, buffer3;
+	stringstream filenr;
+	SpectraDir = "/data1/dmoser/Spectra1e7_1e4/";
+        string SpectraNr;
+	
+	filenr.str(""); // clearing the stringstream before each iteration
+	filenr << MCSourceFile;
+	SpectraNr= "Spectra1e4_" + filenr.str() + "_filtered.txt";
+	MonteCarloData.open( (SpectraDir+SpectraNr).c_str() ,ios::in);
+	cout << "MonteCarloBUG: Opened File = " << (SpectraDir+SpectraNr).c_str() << endl;
+      
+
+	// define output file
+	OutStringStream.str("");
+	ofstream MonteCarloOut;
+	OutStringStream << commonelectrontraj.filepath << "MonteCarlo/"  << "DetectorData"+ filenr.str() +".txt";
+	conclusionfilename = OutStringStream.str(); // conclusionfilename is just reused here for opening the files
+	MonteCarloOut.open(conclusionfilename.c_str(),ios::out);
+	// Header
+	MonteCarloOut << "XStart" << "\t" << "YStart" << "\t" << "ZStart" << "\t" << "Ekin" << "\t" << "DVPhase1" << "\t" << "DVPhase2" << "\t" << "BDV" << "\t";
+        MonteCarloOut << "ApertX" << "\t" << "ApertY" << "\t" << "ApertZ" << "\t" << "ApertPhase" << "\t" << "BApert" << "\t";
+	MonteCarloOut << "TZ1StartGCX" << "\t" << "TZ1StartGCY" << "\t" << "TZ1StartGCZ" << "\t";
+	MonteCarloOut << "TZ1EndGCX" << "\t" << "TZ1EndGCY" << "\t" << "TZ1EndGCZ" << "\t";
+	MonteCarloOut << "TZ2StartGCX" << "\t" << "TZ2StartGCY" << "\t" << "TZ2StartGCZ" << "\t";
+	MonteCarloOut << "TZ2EndGCX" << "\t" << "TZ2EndGCY" << "\t" << "TZ2EndGCZ" << "\t";
+        MonteCarloOut << "xDet" << "\t" << "yDet" << "\t" << "zDet" << "\t" << "DetPhase" << "\t" << "DetB" << "\t" << "ThetaDet" << endl;
+	
+
+	//before we go in loop, we calc Bfield at DV and Aperture to define starting window
+	// we calc the Bfield at DV and Aperture
+	testpos[1]=0;
+	testpos[2]=R_1;
+	testpos[3]=commonelectrontraj.Zstart;
+	magfieldtraj(testpos,B_DV,filedir);
+ 	B_DV_abs=sqrt(B_DV[1]*B_DV[1]+B_DV[2]*B_DV[2]+B_DV[3]*B_DV[3]);
+	testpos[3]=-0.3;
+	magfieldtraj(testpos,B_A,filedir);
+ 	B_A_abs=sqrt(B_A[1]*B_A[1]+B_A[2]*B_A[2]+B_A[3]*B_A[3]);
+	r_A=B_A_abs/B_DV_abs;
+	sqrt_r_A=sqrt(r_A);
+	//calc unit vector to define direction for the velocity calc, in B direction
+	n[1] = B_DV[1]/B_DV_abs;
+	n[2] = B_DV[2]/B_DV_abs;
+	n[3] = B_DV[3]/B_DV_abs;
+
+	// now we calc the range of values that are allowed in X and Y
+	// first, scale the aperture window to DV
+	DVwindow_X = ApertX * sqrt_r_A;
+	DVwindow_Y = ApertY * sqrt_r_A;
+	DVwindow_shiftX = apertXshift * sqrt_r_A;
+	DVwindow_shiftY = apertYshift * sqrt_r_A;
+
+	//calc max gyration radius from 45° and maximum energy
+	velocity(n,782000.,cos(45./180*M_PI),0.,velo); 
+ 	v=sqrt(velo[1]*velo[1]+velo[2]*velo[2]+velo[3]*velo[3]);
+	V_perpend =sin(45./180*M_PI)*v;
+        gam=1./sqrt(1.-pow(v/c,2.));     // gamma factor:
+	double StartgyraRMax = gam * MASS * V_perpend/ 1.602177e-19 / B_DV_abs;
+
+	counter = 0;
+	while ( MonteCarloData >> buffer1 >> buffer2 >> buffer3 >> commonelectrontraj.thetaStartmax >> commonelectrontraj.Startphi >> commonelectrontraj.Ekin ){
+	    //cout << endl << "TRAJ: Decay#: " << counter << endl;	    
+	    counter ++;
+	
+	
+	    // if theta is greater than 45°, filter will reflect -> cutoff
+	    if( commonelectrontraj.thetaStartmax <= 45. ){
+	
+		commonelectrontraj.Startphi = commonelectrontraj.Startphi/180.*M_PI; //rad
+		commonelectrontraj.thetaStartmax = commonelectrontraj.thetaStartmax /180. * M_PI; //rad
+		commonelectrontraj.Ekin *=1000.; // from keV to eV!
+	   	
+
+		// here we calculate the gyration radius so that we can restrict the y random dice position to ones, that at least have a chance to enter the aperture
+		velocity(n,commonelectrontraj.Ekin,cos(commonelectrontraj.thetaStartmax),commonelectrontraj.Startphi,velo); 
+		
+		// calculations for gyrationR and finally point, where to start for Guiding center at Bline-position
+ 		v=sqrt(velo[1]*velo[1]+velo[2]*velo[2]+velo[3]*velo[3]);
+		V_perpend =sin(commonelectrontraj.thetaStartmax)*v;
+                gam=1./sqrt(1.-pow(v/c,2.));     // gamma factor:
+		StartgyraR = gam * MASS * V_perpend/ 1.602177e-19 / B_DV_abs;
+
+		// now we use the DV window data as well as gyrationradius to restrict starting position 
+		// (at least in Y, in X, we want uniform distribution in case we want to move aperture in Post processing)
+		// for Y, we not only consider theta through rG but also phi -> phi changes the range and the center of the range!
+		randomnumber = (double)rand()*2./RAND_MAX -1.; // should be a number between -1 and 1
+		commonelectrontraj.Ystart = commonelectrontraj.R_1 + DVwindow_shiftY + StartgyraR*cos(commonelectrontraj.Startphi);
+	       	commonelectrontraj.Ystart += (DVwindow_Y/2.+ StartgyraR) * randomnumber;
+		//srand (time(NULL));
+		randomnumber = (double)rand()*2./RAND_MAX -1.; // should be a number between -1 and 1
+		commonelectrontraj.Xstart= DVwindow_shiftX + (DVwindow_X/2.+2*StartgyraRMax) * randomnumber; 
+			
+
+		//commonelectrontraj.Ystart= commonelectrontraj.R_1 + apertYshift + (ApertY+ApertExpander)/2. * dist(eng); //dist(eng) gives numb between -1 and 1 for selection of aperture position
+		//commonelectrontraj.Xstart= apertXshift+ (ApertX+ApertExpander)/2. * dist(eng); 
+		//Zstart left constant as defined in beginning of main, for now
+
+	   	trajelectronN(conclusionfilename,1,0., MonteCarloOut ); //filenam, N, startgyraR, apertYshift,apertXshift
+	
+	    }
+	    else cout << "MonteCarloBug: theta > 45" << endl;
+	    
+
+	} //closing the while loop
+	
+	MonteCarloOut.close();
+	MonteCarloData.close();
+
+	//}// for loop closing of single monte carlo files
+
+		//dont forget to close the file streams
+		//
+		//
+
+    }//closing monte carlo simulations
+
+
 
 
 

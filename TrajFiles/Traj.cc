@@ -6,6 +6,8 @@ void electronstart(double z,double r,double costheta,double phidir,double Ekin,d
 void electrongeneration(double *x,double *v, double phidir);
 void subrn(double *u,int len);
 double randomnumber();
+double PhaseAngleFunc(double *v, double *B, int charge);
+double ThetaLocal(double theta0, double B0, double Blocal);
 
 
 int IJKLRANDOM;
@@ -22,7 +24,16 @@ struct typeelectrontraj{
         double Time;            // particle flight time [s]
 	int hemisphere;
 	bool HitApertFlag;
-    // Parameters of the starting disk = source of the particles representing an appertur or a beam
+	double StartPhase, ApertPhase, DetPhase, StartPhase2;
+	double Apertb, Startb;
+	double DetB[4], StartB[4];
+	double DeltaTheta;
+	double TransitionZone1StartGC[4];
+	double TransitionZone1EndGC[4];
+	double TransitionZone2StartGC[4];
+	double TransitionZone2EndGC[4];
+    
+	// Parameters of the starting disk = source of the particles representing an appertur or a beam
         double Xstart, ApertGridX;          // x-coordinat of the starting disk center [m]
         double Ystart, ApertGridY;          // y-coordinat of the starting disk center [m]
         double Zstart, ApertGridZ;          // z-coordinat of the starting disk center [m]
@@ -44,6 +55,7 @@ struct typeelectrontraj{
 	bool PercOn;
 	bool G4Compare;
 	bool Envelope;
+	bool ClusterMC;
     // simulation settings:
         int numstepmax;         // maximum number of Runge-Kutta steps
         double Timemax;         // Maximal time [s]
@@ -209,6 +221,58 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 
 
 
+	//////////////////////////////////////////
+	// Cluster MONTE CARLO
+	// ///////////////////////////////
+	if( commonelectrontraj.ClusterMC ){
+
+		// Electron generator:
+		electrongeneration(x,v,commonelectrontraj.Startphi);            // sets initial condition for x and v, also phi setable
+		commonelectrontraj.Startb = sqrt(commonelectrontraj.StartB[1]*commonelectrontraj.StartB[1] +commonelectrontraj.StartB[2]*commonelectrontraj.StartB[2] +commonelectrontraj.StartB[3]*commonelectrontraj.StartB[3]);
+		commonelectrontraj.StartPhase = commonelectrontraj.Startphi+M_PI;// investigating velocity(), we see that phi of v is just a phase offset to phase of starting position	
+		// StartB is written in electronstart, to be used as cross check to PhaseAngleFunc with Bfield vector
+		commonelectrontraj.StartPhase2 = PhaseAngleFunc(v, commonelectrontraj.StartB, -1);	
+
+		// Trajectory calculation:
+		trajelectron1(x,v,electronindex);
+
+		// we write out StartP, Ekin, StartPhase (2 methods), BDV	
+		OutStream << commonelectrontraj.Xstart << "\t"<< commonelectrontraj.Ystart << "\t" << commonelectrontraj.Zstart << "\t";
+	        OutStream << commontrajexact.Ekin << "\t" << commonelectrontraj.StartPhase << "\t" << commonelectrontraj.StartPhase2 << "\t" << commonelectrontraj.Startb << "\t";
+
+		//reuse Startb for norm at Detector
+		commonelectrontraj.Startb = sqrt(commonelectrontraj.DetB[1]*commonelectrontraj.DetB[1] +commonelectrontraj.DetB[2]*commonelectrontraj.DetB[2] +commonelectrontraj.DetB[3]*commonelectrontraj.DetB[3]);
+		//
+		// we write away ApertPoint, Apert Phase, B_A
+		OutStream << commonelectrontraj.ApertGridX << "\t"<< commonelectrontraj.ApertGridY << "\t" << commonelectrontraj.ApertGridZ << "\t";
+		OutStream << commonelectrontraj.ApertPhase << "\t" << commonelectrontraj.Apertb << "\t";
+
+		//we write away transition zone 1 data: Start GC, EndGC
+		OutStream << commonelectrontraj.TransitionZone1StartGC[1] << "\t" << commonelectrontraj.TransitionZone1StartGC[2] << "\t" << commonelectrontraj.TransitionZone1StartGC[3] << "\t";
+		OutStream << commonelectrontraj.TransitionZone1EndGC[1] << "\t" << commonelectrontraj.TransitionZone1EndGC[2] << "\t" << commonelectrontraj.TransitionZone1EndGC[3] << "\t";
+
+		//we write away transition zone 2 data: Start GC, EndGC
+		OutStream << commonelectrontraj.TransitionZone2StartGC[1] << "\t" << commonelectrontraj.TransitionZone2StartGC[2] << "\t" << commonelectrontraj.TransitionZone2StartGC[3] << "\t";
+		OutStream << commonelectrontraj.TransitionZone2EndGC[1] << "\t" << commonelectrontraj.TransitionZone2EndGC[2] << "\t" << commonelectrontraj.TransitionZone2EndGC[3] << "\t";
+
+		//we write away detector data: DetPoint, DetPhase, B_Det
+		OutStream << x[1] << "\t" << x[2] << "\t" << x[3] << "\t";
+		OutStream << PhaseAngleFunc(v, commonelectrontraj.DetB, -1) << "\t" << commonelectrontraj.Startb;
+
+		//we don't know theta out here, so we calc it from v and the reference vector (theta relative to detector)
+		double V=sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3]);
+		double vpara = v[2]*-sin(commonelectrontraj.alpha/180.*M_PI) + v[3]*cos(commonelectrontraj.alpha/180.*M_PI);
+		double thetaend = acos(vpara/V);
+		OutStream << "\t" << thetaend/M_PI*180. << endl;
+
+	}
+
+
+
+
+
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// COMPARE WITH G4
 	if( commonelectrontraj.G4Compare ){
 		
@@ -361,6 +425,19 @@ void trajelectron1(double *x, double *v, int& electronindex){
 	long double V, V_parallel, V_perpend;
 	int ZatApert = 0;
 	double sign;
+	double ThetaAdiab;
+	bool TransitionZone1Start = false;
+	bool TransitionZone1End = false;
+	bool TransitionZone2Start = false;
+	bool TransitionZone2End = false;
+	double DeltaThetaExtremalOld = 0., DeltaThetaExtremalNew = 0.;
+	double DeltaThetaOld = 0.;
+	int DeltaThetaSignNew = 1, DeltaThetaSignOld = 1;
+	double DeltaExtremal_relative = 0.;
+	double Zone1HighThreshold_relative = 0.01;
+	double Zone1LowThreshold_absolute = 0.13;
+	double Zone2HighThreshold_relative = 0.08;
+	double Zone2LowThreshold_absolute = 0.13;
 	/////////
 
 	// initialize calculation:
@@ -383,6 +460,8 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		}
 	
 		commonelectrontraj.Time+=commontrajexact.h;     // Advance the flight time clock
+		
+		// calculate parameters, that are required most of the time!
 		V=sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3]);
 		Phi=commontrajexact.Phi;                // Electric potential
 		magfieldtraj(x,B,commonelectrontraj.filepath);                      // Calculate B-field
@@ -395,11 +474,12 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		if( fabs(costheta - 1.) < 10.e-12 ){
 			costheta = 1.;
 		}
-		
+		ThetaAdiab = ThetaLocal(commonelectrontraj.thetaStartmax, commonelectrontraj.Startb, b)/M_PI*180.; //in degree
 		theta=180./PI*acos(costheta);         // [deg]
 		
-		gam=1./sqrt(1.-V*V/(c*c));     // gamma factor:
 		
+		
+		gam=1./sqrt(1.-V*V/(c*c));     // gamma factor:
 		for(i=1;i<=3;i++)p[i]=MASS*v[i]*gam;  // p: relativistic momentum
 		
 		// The longitudinal and transversal kinetic energies(in unit eV):
@@ -458,6 +538,9 @@ void trajelectron1(double *x, double *v, int& electronindex){
 				if(x[3] <= commonelectrontraj.zdetector && x[2] < 0.){
 					electronindex=5;        // particle reached the detector
 					cout << "NOMOS det reached 180" << endl;
+					commonelectrontraj.DetB[1] = B[1];
+					commonelectrontraj.DetB[2] = B[2];
+					commonelectrontraj.DetB[3] = B[3];
 					break;                  // stop trajacking
 				}
 			}
@@ -465,6 +548,9 @@ void trajelectron1(double *x, double *v, int& electronindex){
 				if( x[2] <= commonelectrontraj.zdetector){
 					electronindex=5;        // particle reached the detector
 					cout << "NOMOS det reached 90" << endl;
+					commonelectrontraj.DetB[1] = B[1];
+					commonelectrontraj.DetB[2] = B[2];
+					commonelectrontraj.DetB[3] = B[3];
 					break;                  // stop trajacking
 				}
 			}
@@ -558,6 +644,203 @@ void trajelectron1(double *x, double *v, int& electronindex){
 				}
 			
 			}
+		}
+
+
+
+		// for Cluster MC 
+		if( commonelectrontraj.ClusterMC ){ 
+			
+			////////////////////////////////////////////////////////////////
+			//writes away the pos at apert for manual cut later
+			if( x[3] >= -0.3 && ZatApert == 0 ){ 
+				ZatApert = 1;
+				
+				// ApertGridX and Y are reused for MC as the size of the aperture
+				commonelectrontraj.ApertGridX = x[1];
+				commonelectrontraj.ApertGridY = x[2];
+				commonelectrontraj.ApertGridZ = x[3];
+				commonelectrontraj.Apertb = b;
+				commonelectrontraj.ApertPhase = PhaseAngleFunc(v, B, -1);
+			}
+			
+			///////////////////////////////////////////////////////////////
+			//check for transition zones. start search after aperture
+			if( ZatApert == 1 ){
+
+				// before TransitionZone 1
+				if( !TransitionZone1Start ){
+					commonelectrontraj.DeltaTheta = ThetaAdiab - theta; // in deg
+					if( abs(commonelectrontraj.DeltaTheta) > Zone1LowThreshold_absolute ){
+
+						TransitionZone1Start = true;
+
+						// now we want the Guiding Center of the starting point
+						V_perpend = sin(acos(costheta)) * V;
+						if(CHARGE < 0) sign = -1.;
+						else sign = 1.;
+						gyraR = gam * MASS * V_perpend/ 1.602177e-19 / b;
+						// v x B
+						CrossP[1] = B[3]*v[2] - B[2]*v[3];
+						CrossP[2] = -B[3]*v[1] + B[1]*v[3];
+						CrossP[3] = B[2]*v[1] - B[1]*v[2];
+						CrossPL = sqrt(CrossP[1]*CrossP[1] + CrossP[2]*CrossP[2] + CrossP[3]*CrossP[3]);
+						if( CrossPL < 1e-12 ){
+							for(int i=1;i<=3;i++){commonelectrontraj.TransitionZone1StartGC[i] = x[i];}
+						}
+						else{
+							for(int i=1;i<=3;i++){commonelectrontraj.TransitionZone1StartGC[i] = x[i] + sign* CrossP[i]/CrossPL * gyraR;};
+						}
+
+					}
+				}
+
+				// now the case after TransitionZone 1 has started -> we need to save the extremal points of the oscillation
+				// then compare extremal points -> if that Delta of DeltaThetaExtremal is small -> Transition Zone end
+				// start search after Transition Zone 1 has started, but has not ended yet!
+				if( TransitionZone1Start && !TransitionZone1End ){
+					
+					commonelectrontraj.DeltaTheta = ThetaAdiab - theta;
+					// check the change of Delta Theta, if positive or negative
+					if( DeltaThetaOld <= commonelectrontraj.DeltaTheta ) DeltaThetaSignNew = 1;
+					if( DeltaThetaOld > commonelectrontraj.DeltaTheta ) DeltaThetaSignNew = -1;
+
+					// if there is a sign change compared to last point -> ExtremalPoint
+					// Otherwise not
+					if( DeltaThetaSignNew == DeltaThetaSignOld ){ // no new extremal point
+						DeltaThetaOld = commonelectrontraj.DeltaTheta;
+						// we don't need to set DeltaThetaSignOld because the new one is the same!
+					}
+					else{ // else, there is a new extremal point (the last point is the extremal point, not the new one
+						
+						DeltaThetaExtremalNew = DeltaThetaOld;
+						//still, search must continue, so we make the old values current
+						DeltaThetaOld = commonelectrontraj.DeltaTheta;	
+						DeltaThetaSignOld = DeltaThetaSignNew;
+
+						//now we have to check, how much the extremal point grew compared to the last extremal point (abs values)
+						DeltaExtremal_relative =( abs(DeltaThetaExtremalNew) - abs(DeltaThetaExtremalOld) ) / abs(DeltaThetaExtremalOld);
+						// now we can also update the old extremal point
+						DeltaThetaExtremalOld = DeltaThetaExtremalNew;
+
+						if(DeltaExtremal_relative < Zone1HighThreshold_relative){ // END OF ZONE!
+							
+							TransitionZone1End = true;
+							
+							// and calculate the guiding center of that endpoint
+							V_perpend = sin(acos(costheta)) * V;
+							if(CHARGE < 0) sign = -1.;
+							else sign = 1.;
+							gyraR = gam * MASS * V_perpend/ 1.602177e-19 / b;
+							// v x B
+							CrossP[1] = B[3]*v[2] - B[2]*v[3];
+							CrossP[2] = -B[3]*v[1] + B[1]*v[3];
+							CrossP[3] = B[2]*v[1] - B[1]*v[2];
+							CrossPL = sqrt(CrossP[1]*CrossP[1] + CrossP[2]*CrossP[2] + CrossP[3]*CrossP[3]);
+							if( CrossPL < 1e-12 ){
+								for(int i=1;i<=3;i++){commonelectrontraj.TransitionZone1EndGC[i] = x[i];}
+							}
+							else{
+								for(int i=1;i<=3;i++){commonelectrontraj.TransitionZone1EndGC[i] = x[i] + sign* CrossP[i]/CrossPL * gyraR;};
+							}
+					
+						} //endif for END OF ZONE1
+					} // end of else for extremal point
+
+				}
+
+
+				// after Zone 1, along the envelope plateau, search start of 
+				// Zone 2 hasnt started yet
+				if( TransitionZone1End && !TransitionZone2Start ){
+					
+					//analogeous to end of Zone1, we have to check change of extrema
+					commonelectrontraj.DeltaTheta = ThetaAdiab - theta;
+					// check the change of Delta Theta, if positive or negative
+					if( DeltaThetaOld <= commonelectrontraj.DeltaTheta ) DeltaThetaSignNew = 1;
+					if( DeltaThetaOld > commonelectrontraj.DeltaTheta ) DeltaThetaSignNew = -1;
+
+					// if there is a sign change compared to last point -> ExtremalPoint
+					// Otherwise not
+					if( DeltaThetaSignNew == DeltaThetaSignOld ){ // no new extremal point
+						DeltaThetaOld = commonelectrontraj.DeltaTheta;
+						// we don't need to set DeltaThetaSignOld because the new one is the same!
+					}
+					else{ // else, there is a new extremal point (the last point is the extremal point, not the new one
+						
+						DeltaThetaExtremalNew = DeltaThetaOld;
+						//still, search must continue, so we make the old values current
+						DeltaThetaOld = commonelectrontraj.DeltaTheta;	
+						DeltaThetaSignOld = DeltaThetaSignNew;
+
+						//now we have to check, how much the extremal point grew compared to the last extremal point (abs values)
+						DeltaExtremal_relative =( abs(DeltaThetaExtremalNew) - abs(DeltaThetaExtremalOld) ) / abs(DeltaThetaExtremalOld);
+						// now we can also update the old extremal point
+						DeltaThetaExtremalOld = DeltaThetaExtremalNew;
+
+						// now in contrast to end of zone 1, we check, when the extremal Delta is bigger than the threshold
+						if( abs(DeltaExtremal_relative) > Zone2HighThreshold_relative){ // START OF ZONE2
+							
+							TransitionZone2Start = true;
+							
+							// and calculate the guiding center of that endpoint
+							V_perpend = sin(acos(costheta)) * V;
+							if(CHARGE < 0) sign = -1.;
+							else sign = 1.;
+							gyraR = gam * MASS * V_perpend/ 1.602177e-19 / b;
+							// v x B
+							CrossP[1] = B[3]*v[2] - B[2]*v[3];
+							CrossP[2] = -B[3]*v[1] + B[1]*v[3];
+							CrossP[3] = B[2]*v[1] - B[1]*v[2];
+							CrossPL = sqrt(CrossP[1]*CrossP[1] + CrossP[2]*CrossP[2] + CrossP[3]*CrossP[3]);
+							if( CrossPL < 1e-12 ){
+								for(int i=1;i<=3;i++){commonelectrontraj.TransitionZone2StartGC[i] = x[i];}
+							}
+							else{
+								for(int i=1;i<=3;i++){commonelectrontraj.TransitionZone2StartGC[i] = x[i] + sign* CrossP[i]/CrossPL * gyraR;};
+							}
+					
+						} //endif for Start of Zone2
+					} // end of else for extremal point
+				}
+
+
+				/////////////////////////////
+				//now we only have to check for the end of Zone 2 anymore, which is when the DeltaTheta in general gets under a threshold again
+				// Zone 2 has started, but not ended yet
+				if( TransitionZone2Start && !TransitionZone2End ){
+
+					commonelectrontraj.DeltaTheta = ThetaAdiab - theta; // in deg
+					if( abs(commonelectrontraj.DeltaTheta) < Zone2LowThreshold_absolute ){
+
+						TransitionZone2End = true;
+
+						// now we want the Guiding Center of the starting point
+						V_perpend = sin(acos(costheta)) * V;
+						if(CHARGE < 0) sign = -1.;
+						else sign = 1.;
+						gyraR = gam * MASS * V_perpend/ 1.602177e-19 / b;
+						// v x B
+						CrossP[1] = B[3]*v[2] - B[2]*v[3];
+						CrossP[2] = -B[3]*v[1] + B[1]*v[3];
+						CrossP[3] = B[2]*v[1] - B[1]*v[2];
+						CrossPL = sqrt(CrossP[1]*CrossP[1] + CrossP[2]*CrossP[2] + CrossP[3]*CrossP[3]);
+						if( CrossPL < 1e-12 ){
+							for(int i=1;i<=3;i++){commonelectrontraj.TransitionZone2EndGC[i] = x[i];}
+						}
+						else{
+							for(int i=1;i<=3;i++){commonelectrontraj.TransitionZone2EndGC[i] = x[i] + sign* CrossP[i]/CrossPL * gyraR;};
+						}
+
+					}
+
+				} // end of if search for Zone 2 End
+
+
+
+
+			}
+
 		}
 
 
@@ -668,7 +951,9 @@ void electronstart(double Start_cord[4],double r,double costheta,double phidir,d
     // Calculate the B-field in the Starting point
     magfieldtraj(x,B,commonelectrontraj.filepath);
     b=sqrt(B[1]*B[1]+B[2]*B[2]+B[3]*B[3]);
- 
+	commonelectrontraj.StartB[1] = B[1]; 
+	commonelectrontraj.StartB[2] = B[2]; 
+	commonelectrontraj.StartB[3] = B[3]; 
     // Calculate the unity vector n of the B-field:
     if(B[3]>0.)for(k=1;k<=3;k++)n[k]=B[k]/b;
     else{for(k=1;k<=3;k++)n[k]=-B[k]/b;}
@@ -781,4 +1066,75 @@ double randomnumber(){      // random number generater (0,1)
     }
 
 ///////////////////////////////////////////////////////////
+//
+//
+//
+//
+//function for calculating the local phase of a particle dependent on: v, B, q,
+//is currently under the assumption that x-unit vector stays perpendicular to B (roughly)
+//
 
+double PhaseAngleFunc(double *v, double *B, int charge){
+
+	double ForceVector[4];
+	double ForceNorm;
+	double UnitVectorX;
+
+	// v x B
+	ForceVector[1] = v[2]*B[3] - v[3]*B[2];
+	ForceVector[2] = v[3]*B[1] - v[1]*B[3];
+	ForceVector[3] = v[1]*B[2] - v[2]*B[1];
+	//Norm of force vector (without charge still)
+	ForceNorm = sqrt(ForceVector[1]*ForceVector[1] + ForceVector[2]*ForceVector[2] +ForceVector[3]*ForceVector[3]); 
+	// times charge, negative so that is is pointing opposite to GC, and then only Fx normed as this is the projected part to x-norm vector
+	UnitVectorX = - (double)charge * ForceVector[1]/ForceNorm;
+
+	return acos(UnitVectorX);
+
+}
+
+/////////////////////////////////////////////////////////////////
+//
+//
+//
+//function for adiabatic theta local
+double ThetaLocal(double theta0, double B0, double Blocal){
+
+	return asin(sin(theta0)*sqrt(Blocal/B0));
+
+}
+
+////////////////////////////////////////////////////////////
+//
+//
+//
+// GC calculation
+
+//void GuidingCenterFunc(double *x, double *v, double *B, double theta, double gamma, double b_norm, double v_norm, int charge){
+//
+//	double ForceVector[4];
+//	double ForceNorm;
+//	double rG;
+//	double MASS=9.1093836e-31;      // electron mass (in SI) [kg]
+//	
+//	// v x B
+//	ForceVector[1] = v[2]*B[3] - v[3]*B[2];
+//	ForceVector[2] = v[3]*B[1] - v[1]*B[3];
+//	ForceVector[3] = v[1]*B[2] - v[2]*B[1];
+//	//Norm of force vector (without charge still)
+//	ForceNorm = sqrt(ForceVector[1]*ForceVector[1] + ForceVector[2]*ForceVector[2] + ForceVector[3]*ForceVector[3]); 
+//	v_norm = sqrt(v[1]*v[1] + v[2]*v[2] + v[3]*v[3]);
+//	b_norm = sqrt(B[1]*B[1] + B[2]*B[2] + B[3]*B[3]);
+//	v_para = (v[1]*B[1] + v[2]*B[2] + v[3]*B[3])
+//        gam=1./sqrt(1.-pow(v_norm/c,2.));     // gamma factor:
+//	rG = gam * MASS * V_perpend/ 1.602177e-19 / b;
+//
+//}
+
+
+
+
+
+
+
+////////////////////////////////
