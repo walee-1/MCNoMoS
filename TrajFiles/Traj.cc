@@ -8,7 +8,7 @@ void subrn(double *u,int len);
 double randomnumber();
 double PhaseAngleFunc(double *v, double *B, int charge);
 double ThetaLocal(double theta0, double B0, double Blocal);
-
+double PointDiff(double *x1, double *x2);
 
 int IJKLRANDOM;
 
@@ -433,11 +433,15 @@ void trajelectron1(double *x, double *v, int& electronindex){
 	double DeltaThetaExtremalOld = 0., DeltaThetaExtremalNew = 0.;
 	double DeltaThetaOld = 0.;
 	int DeltaThetaSignNew = 1, DeltaThetaSignOld = 1;
-	double DeltaExtremal_relative = 0.;
-	double Zone1HighThreshold_relative = 0.01;
+	double Extremal_slope = 0.;
+	double Zone1HighThreshold_slope = 0.02;
 	double Zone1LowThreshold_absolute = 0.13;
-	double Zone2HighThreshold_relative = 0.08;
+	double Zone2HighThreshold_slope = -0.05;
 	double Zone2LowThreshold_absolute = 0.13;
+	double xExtremal_old[4];
+	xExtremal_old[1] = 0.;
+	xExtremal_old[2] = 1.;
+	xExtremal_old[3] = -2.;
 	/////////
 
 	// initialize calculation:
@@ -445,8 +449,10 @@ void trajelectron1(double *x, double *v, int& electronindex){
 	commonelectrontraj.Errenergy=0.;    // energy error [eV]
 	commonelectrontraj.Time=0.;         // particle flight time [s]
 	
-	double zdetwAlpha = commonelectrontraj.R_1*cos((commonelectrontraj.alpha-90.)/180.*M_PI) + commonelectrontraj.zdetector*sin((commonelectrontraj.alpha-90.)/180.*M_PI);
-	double ydetwAlpha = -commonelectrontraj.R_1*sin((commonelectrontraj.alpha-90.)/180.*M_PI) + commonelectrontraj.zdetector*cos((commonelectrontraj.alpha-90.)/180.*M_PI);
+	double zRxBEnd = commonelectrontraj.R_1*cos((commonelectrontraj.alpha-90.)/180.*M_PI);
+	double yRxBEnd = -commonelectrontraj.R_1*sin((commonelectrontraj.alpha-90.)/180.*M_PI);
+	double zdetwAlpha = zRxBEnd + commonelectrontraj.zdetector*sin((commonelectrontraj.alpha-90.)/180.*M_PI);
+	double ydetwAlpha = yRxBEnd + commonelectrontraj.zdetector*cos((commonelectrontraj.alpha-90.)/180.*M_PI);
 	//cout << "TRAJBUG: zdetwAlpha = " << zdetwAlpha << ydetwAlpha << endl;
 
 	commontrajexact.filepath = commonelectrontraj.filepath;
@@ -696,56 +702,81 @@ void trajelectron1(double *x, double *v, int& electronindex){
 				}
 
 				// now the case after TransitionZone 1 has started -> we need to save the extremal points of the oscillation
-				// then compare extremal points -> if that Delta of DeltaThetaExtremal is small -> Transition Zone end
+				// then compare extremal points -> if slope between two extremal points is below a threshold -> Transition Zone end. FOR NOW, we check only maxima! (because minima dont follow
+				// same envelope necessarily!)
 				// start search after Transition Zone 1 has started, but has not ended yet!
-				if( TransitionZone1Start && !TransitionZone1End ){
+				// we can hardcode that the search for the transitionzone1End should only start after z > 0, we may safe some search time!
+				if( TransitionZone1Start && !TransitionZone1End && x[3] > 0. ){
 					
 					commonelectrontraj.DeltaTheta = ThetaAdiab - theta;
 					// check the change of Delta Theta, if positive or negative
 					if( DeltaThetaOld <= commonelectrontraj.DeltaTheta ) DeltaThetaSignNew = 1;
-					if( DeltaThetaOld > commonelectrontraj.DeltaTheta ) DeltaThetaSignNew = -1;
+					else DeltaThetaSignNew = -1;
 
-					// if there is a sign change compared to last point -> ExtremalPoint
-					// Otherwise not
-					if( DeltaThetaSignNew == DeltaThetaSignOld ){ // no new extremal point
-						DeltaThetaOld = commonelectrontraj.DeltaTheta;
-						// we don't need to set DeltaThetaSignOld because the new one is the same!
-					}
-					else{ // else, there is a new extremal point (the last point is the extremal point, not the new one
+					// if the old sign is positive and new sign is negative -> MaximumPoint
+					if( DeltaThetaSignNew == -1 && DeltaThetaSignOld == 1 ){ //there is a new extremal point (the last point is the extremal point, not the new one
 						
-						DeltaThetaExtremalNew = DeltaThetaOld;
-						//still, search must continue, so we make the old values current
-						DeltaThetaOld = commonelectrontraj.DeltaTheta;	
+						//first we have to check, if we have already found an extremal point before. If not, the x_old distance to the first extremal point
+						//strongly suppresses the slope value and therefore would immediately give a small slope and the Zone End!
+						//so at first extremal point, set x_old and do nothing else
+						if(DeltaThetaExtremalNew == 0.){ // if this is zero, there was no extremal point so far
+							//so we just set the old extremal point as this one for a start
+							xExtremal_old[1] = x[1];	
+							xExtremal_old[2] = x[2];	
+							xExtremal_old[3] = x[3];	
+
+							// update the extremal values
+							DeltaThetaExtremalNew = DeltaThetaOld;
+							//still, search must continue, so we make the old values current
+							DeltaThetaOld = commonelectrontraj.DeltaTheta;	
+							DeltaThetaSignOld = DeltaThetaSignNew;
+							DeltaThetaExtremalOld = DeltaThetaExtremalNew;
+
+						}
+						else{
+
+							DeltaThetaExtremalNew = DeltaThetaOld;
+							//still, search must continue, so we make the old values current
+							DeltaThetaOld = commonelectrontraj.DeltaTheta;	
+							DeltaThetaSignOld = DeltaThetaSignNew;
+
+							//now we have to check the slope. To be accurate, we need to calc the positional difference for division
+							Extremal_slope =( DeltaThetaExtremalNew - DeltaThetaExtremalOld ) / PointDiff( xExtremal_old, x );
+							// now we can also update the old extremal point
+							DeltaThetaExtremalOld = DeltaThetaExtremalNew;
+							xExtremal_old[1] = x[1];	
+							xExtremal_old[2] = x[2];	
+							xExtremal_old[3] = x[3];	
+
+							if(Extremal_slope < Zone1HighThreshold_slope){ // END OF ZONE!
+								
+								TransitionZone1End = true;
+								
+								// and calculate the guiding center of that endpoint
+								V_perpend = sin(acos(costheta)) * V;
+								if(CHARGE < 0) sign = -1.;
+								else sign = 1.;
+								gyraR = gam * MASS * V_perpend/ 1.602177e-19 / b;
+								// v x B
+								CrossP[1] = B[3]*v[2] - B[2]*v[3];
+								CrossP[2] = -B[3]*v[1] + B[1]*v[3];
+								CrossP[3] = B[2]*v[1] - B[1]*v[2];
+								CrossPL = sqrt(CrossP[1]*CrossP[1] + CrossP[2]*CrossP[2] + CrossP[3]*CrossP[3]);
+								if( CrossPL < 1e-12 ){
+									for(int i=1;i<=3;i++){commonelectrontraj.TransitionZone1EndGC[i] = x[i];}
+								}
+								else{
+									for(int i=1;i<=3;i++){commonelectrontraj.TransitionZone1EndGC[i] = x[i] + sign* CrossP[i]/CrossPL * gyraR;};
+								}
+						
+							} //endif for END OF ZONE1
+						} // end of else, when the extremal point was not the first anymore
+					} // end of if for extremal point
+					// Otherwise not
+					else{ // no new extremal point
+						DeltaThetaOld = commonelectrontraj.DeltaTheta;
 						DeltaThetaSignOld = DeltaThetaSignNew;
-
-						//now we have to check, how much the extremal point grew compared to the last extremal point (abs values)
-						DeltaExtremal_relative =( abs(DeltaThetaExtremalNew) - abs(DeltaThetaExtremalOld) ) / abs(DeltaThetaExtremalOld);
-						// now we can also update the old extremal point
-						DeltaThetaExtremalOld = DeltaThetaExtremalNew;
-
-						if(DeltaExtremal_relative < Zone1HighThreshold_relative){ // END OF ZONE!
-							
-							TransitionZone1End = true;
-							
-							// and calculate the guiding center of that endpoint
-							V_perpend = sin(acos(costheta)) * V;
-							if(CHARGE < 0) sign = -1.;
-							else sign = 1.;
-							gyraR = gam * MASS * V_perpend/ 1.602177e-19 / b;
-							// v x B
-							CrossP[1] = B[3]*v[2] - B[2]*v[3];
-							CrossP[2] = -B[3]*v[1] + B[1]*v[3];
-							CrossP[3] = B[2]*v[1] - B[1]*v[2];
-							CrossPL = sqrt(CrossP[1]*CrossP[1] + CrossP[2]*CrossP[2] + CrossP[3]*CrossP[3]);
-							if( CrossPL < 1e-12 ){
-								for(int i=1;i<=3;i++){commonelectrontraj.TransitionZone1EndGC[i] = x[i];}
-							}
-							else{
-								for(int i=1;i<=3;i++){commonelectrontraj.TransitionZone1EndGC[i] = x[i] + sign* CrossP[i]/CrossPL * gyraR;};
-							}
-					
-						} //endif for END OF ZONE1
-					} // end of else for extremal point
+					}
 
 				}
 
@@ -758,28 +789,26 @@ void trajelectron1(double *x, double *v, int& electronindex){
 					commonelectrontraj.DeltaTheta = ThetaAdiab - theta;
 					// check the change of Delta Theta, if positive or negative
 					if( DeltaThetaOld <= commonelectrontraj.DeltaTheta ) DeltaThetaSignNew = 1;
-					if( DeltaThetaOld > commonelectrontraj.DeltaTheta ) DeltaThetaSignNew = -1;
+					else DeltaThetaSignNew = -1;
 
-					// if there is a sign change compared to last point -> ExtremalPoint
-					// Otherwise not
-					if( DeltaThetaSignNew == DeltaThetaSignOld ){ // no new extremal point
-						DeltaThetaOld = commonelectrontraj.DeltaTheta;
-						// we don't need to set DeltaThetaSignOld because the new one is the same!
-					}
-					else{ // else, there is a new extremal point (the last point is the extremal point, not the new one
+
+					// if the old sign is positive and new sign is negative -> MaximumPoint
+					if( DeltaThetaSignNew == -1 && DeltaThetaSignOld == 1 ){ //there is a new extremal point (the last point is the extremal point, not the new one
 						
 						DeltaThetaExtremalNew = DeltaThetaOld;
 						//still, search must continue, so we make the old values current
 						DeltaThetaOld = commonelectrontraj.DeltaTheta;	
 						DeltaThetaSignOld = DeltaThetaSignNew;
 
-						//now we have to check, how much the extremal point grew compared to the last extremal point (abs values)
-						DeltaExtremal_relative =( abs(DeltaThetaExtremalNew) - abs(DeltaThetaExtremalOld) ) / abs(DeltaThetaExtremalOld);
+						//now we have to check the slope. To be accurate, we need to calc the positional difference for division
+						Extremal_slope =( DeltaThetaExtremalNew - DeltaThetaExtremalOld ) / PointDiff( xExtremal_old, x );
 						// now we can also update the old extremal point
 						DeltaThetaExtremalOld = DeltaThetaExtremalNew;
+						xExtremal_old[1] = x[1];	
+						xExtremal_old[2] = x[2];	
+						xExtremal_old[3] = x[3];	
 
-						// now in contrast to end of zone 1, we check, when the extremal Delta is bigger than the threshold
-						if( abs(DeltaExtremal_relative) > Zone2HighThreshold_relative){ // START OF ZONE2
+						if(Extremal_slope < Zone2HighThreshold_slope){ // END OF ZONE!
 							
 							TransitionZone2Start = true;
 							
@@ -799,45 +828,67 @@ void trajelectron1(double *x, double *v, int& electronindex){
 							else{
 								for(int i=1;i<=3;i++){commonelectrontraj.TransitionZone2StartGC[i] = x[i] + sign* CrossP[i]/CrossPL * gyraR;};
 							}
-					
-						} //endif for Start of Zone2
-					} // end of else for extremal point
-				}
+						
+						} //endif for END OF ZONE1
+					} // end of if for extremal point
+					// Otherwise not
+					else{ // no new extremal point
+						DeltaThetaOld = commonelectrontraj.DeltaTheta;
+						DeltaThetaSignOld = DeltaThetaSignNew;
+					}
+				} // end of if for start of transition Zone 2
 
 
 				/////////////////////////////
-				//now we only have to check for the end of Zone 2 anymore, which is when the DeltaTheta in general gets under a threshold again
 				// Zone 2 has started, but not ended yet
+				// we cant just simply look at delta theta, because delta theta oscillates. we still have to check the extrema and go below a threshold!
 				if( TransitionZone2Start && !TransitionZone2End ){
 
-					commonelectrontraj.DeltaTheta = ThetaAdiab - theta; // in deg
-					if( abs(commonelectrontraj.DeltaTheta) < Zone2LowThreshold_absolute ){
+					//analogeous to end of Zone1, we have to check change of extrema
+					commonelectrontraj.DeltaTheta = ThetaAdiab - theta;
+					// check the change of Delta Theta, if positive or negative
+					if( DeltaThetaOld <= commonelectrontraj.DeltaTheta ) DeltaThetaSignNew = 1;
+					else DeltaThetaSignNew = -1;
 
-						TransitionZone2End = true;
 
-						// now we want the Guiding Center of the starting point
-						V_perpend = sin(acos(costheta)) * V;
-						if(CHARGE < 0) sign = -1.;
-						else sign = 1.;
-						gyraR = gam * MASS * V_perpend/ 1.602177e-19 / b;
-						// v x B
-						CrossP[1] = B[3]*v[2] - B[2]*v[3];
-						CrossP[2] = -B[3]*v[1] + B[1]*v[3];
-						CrossP[3] = B[2]*v[1] - B[1]*v[2];
-						CrossPL = sqrt(CrossP[1]*CrossP[1] + CrossP[2]*CrossP[2] + CrossP[3]*CrossP[3]);
-						if( CrossPL < 1e-12 ){
-							for(int i=1;i<=3;i++){commonelectrontraj.TransitionZone2EndGC[i] = x[i];}
-						}
-						else{
-							for(int i=1;i<=3;i++){commonelectrontraj.TransitionZone2EndGC[i] = x[i] + sign* CrossP[i]/CrossPL * gyraR;};
-						}
+					// if the old sign is positive and new sign is negative -> MaximumPoint
+					if( DeltaThetaSignNew == -1 && DeltaThetaSignOld == 1 ){ //there is a new extremal point (the last point is the extremal point, not the new one
+						
+						DeltaThetaExtremalNew = DeltaThetaOld;
+						//still, search must continue, so we make the old values current
+						DeltaThetaOld = commonelectrontraj.DeltaTheta;	
+						DeltaThetaSignOld = DeltaThetaSignNew;
 
+						if( DeltaThetaExtremalNew < Zone2LowThreshold_absolute ){ // END OF ZONE2!
+							
+							TransitionZone2End = true;
+							
+							// and calculate the guiding center of that endpoint
+							V_perpend = sin(acos(costheta)) * V;
+							if(CHARGE < 0) sign = -1.;
+							else sign = 1.;
+							gyraR = gam * MASS * V_perpend/ 1.602177e-19 / b;
+							// v x B
+							CrossP[1] = B[3]*v[2] - B[2]*v[3];
+							CrossP[2] = -B[3]*v[1] + B[1]*v[3];
+							CrossP[3] = B[2]*v[1] - B[1]*v[2];
+							CrossPL = sqrt(CrossP[1]*CrossP[1] + CrossP[2]*CrossP[2] + CrossP[3]*CrossP[3]);
+							if( CrossPL < 1e-12 ){
+								for(int i=1;i<=3;i++){commonelectrontraj.TransitionZone2EndGC[i] = x[i];}
+							}
+							else{
+								for(int i=1;i<=3;i++){commonelectrontraj.TransitionZone2EndGC[i] = x[i] + sign* CrossP[i]/CrossPL * gyraR;};
+							}
+						
+						} //endif for END OF ZONE1
+					} // end of if for extremal point
+					// Otherwise not
+					else{ // no new extremal point
+						DeltaThetaOld = commonelectrontraj.DeltaTheta;
+						DeltaThetaSignOld = DeltaThetaSignNew;
 					}
 
 				} // end of if search for Zone 2 End
-
-
-
 
 			}
 
@@ -1076,20 +1127,26 @@ double randomnumber(){      // random number generater (0,1)
 
 double PhaseAngleFunc(double *v, double *B, int charge){
 
-	double ForceVector[4];
-	double ForceNorm;
-	double UnitVectorX;
+	double ForceVector[4], LocalYVector[4];
+	double LocalYNorm;
+	double px, py;
 
 	// v x B
-	ForceVector[1] = v[2]*B[3] - v[3]*B[2];
-	ForceVector[2] = v[3]*B[1] - v[1]*B[3];
-	ForceVector[3] = v[1]*B[2] - v[2]*B[1];
-	//Norm of force vector (without charge still)
-	ForceNorm = sqrt(ForceVector[1]*ForceVector[1] + ForceVector[2]*ForceVector[2] +ForceVector[3]*ForceVector[3]); 
-	// times charge, negative so that is is pointing opposite to GC, and then only Fx normed as this is the projected part to x-norm vector
-	UnitVectorX = - (double)charge * ForceVector[1]/ForceNorm;
+	ForceVector[1] = (v[2]*B[3] - v[3]*B[2])*(double)charge;
+	ForceVector[2] = (v[3]*B[1] - v[1]*B[3])*(double)charge;
+	ForceVector[3] = (v[1]*B[2] - v[2]*B[1])*(double)charge;
+	
+	// calc the local y axis vector and its norm. as its with cross product with x, it is easy to calc
+	LocalYNorm = sqrt(pow(B[2],2) + pow(B[3],2));
+	LocalYVector[2] = B[3]/LocalYNorm;
+	LocalYVector[3] = -B[2]/LocalYNorm;
 
-	return acos(UnitVectorX);
+	//now calc the projections
+	px = ForceVector[1];
+	py = ForceVector[2] * LocalYVector[2] + ForceVector[3] * LocalYVector[3];
+	
+	// now return phi
+	return atan2(py,px);
 
 }
 
@@ -1103,6 +1160,21 @@ double ThetaLocal(double theta0, double B0, double Blocal){
 	return asin(sin(theta0)*sqrt(Blocal/B0));
 
 }
+
+
+
+//////////////////////////////////////////////////////////
+//
+//
+//function to calculate the length between 2 3D-points
+double PointDiff(double *x1, double *x2){
+	return sqrt( pow( x1[1] - x2[1] , 2) + pow( x1[2] - x2[2] , 2) + pow( x1[3] - x2[3] , 2) );
+}
+
+
+
+
+
 
 ////////////////////////////////////////////////////////////
 //
