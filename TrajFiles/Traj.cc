@@ -9,7 +9,14 @@ double randomnumber();
 double PhaseAngleFunc(double *v, double *B, int charge);
 double ThetaLocal(double theta0, double B0, double Blocal);
 double PointDiff(double *x1, double *x2);
+void GuidingCenterFunc(double *x, double *v, double *B, double costheta, double gamma, double b_norm, double v_norm, double *GC);
 
+int VectorFindMax(vector<double> &MaxList);
+int VectorFindMin(vector<double> &MinList);
+int FindTransZone1EndPosMax( double Threshold, vector<double> &MaxList );
+int FindTransZone1EndPosMin( double Threshold, vector<double> &MinList );
+int FindTransZone2StartPosMax( double Threshold, vector<double> &MaxList );
+int FindTransZone2StartPosMin( double Threshold, vector<double> &MinList );
 int IJKLRANDOM;
 
 
@@ -425,30 +432,46 @@ void trajelectron1(double *x, double *v, int& electronindex){
 	long double V, V_parallel, V_perpend;
 	int ZatApert = 0;
 	double sign;
+
+	// variables for Transition Zone Investigations
 	double ThetaAdiab;
-	bool TransitionZone1Start = false;
-	bool TransitionZone1End = false;
-	bool TransitionZone2Start = false;
-	bool TransitionZone2End = false;
-	double DeltaThetaExtremalOld = 0., DeltaThetaExtremalNew = 0.;
+	//bool TransitionZone1Start = false;
+	//bool TransitionZone1End = false;
+	//bool TransitionZone2Start = false;
+	//bool TransitionZone2End = false;
+	//double DeltaThetaExtremalOld = 0., DeltaThetaExtremalNew = 0.;
 	double DeltaThetaOld = 0.;
 	int DeltaThetaSignNew = 1, DeltaThetaSignOld = 1;
-	double Extremal_slope = 0.;
-	double Zone1HighThreshold_slope = 0.02;
-	double Zone1LowThreshold_absolute = 0.13;
-	double Zone2HighThreshold_slope = -0.05;
-	double Zone2LowThreshold_absolute = 0.13;
-	double xExtremal_old[4];
-	xExtremal_old[1] = 0.;
-	xExtremal_old[2] = 1.;
-	xExtremal_old[3] = -2.;
-	/////////
+	//double ExtremalSlope_old = 0.;
+	//double ExtremalSlope_new = 0.0001; 
+	double Zone1StartThreshold_rel = 0.8;
+	double Zone1EndThreshold_rel = 0.2;
+	double Zone2StartThreshold_rel = 0.2;
+	double Zone2EndThreshold_rel = 0.8;
+	int POIMin, POIMax; // point of interest , reused for all the zone boundaries
+	//double xExtremal_old[4];
+	//xExtremal_old[1] = 0.;
+	//xExtremal_old[2] = 1.;
+	//xExtremal_old[3] = -2.;
+	
+	// vectors for storing the extrema including the corresponding guiding centers for the Transition zones in Cluster MC
+	vector<double> MaximaValues;
+	vector<double> MinimaValues;
+	vector<double> MaxGCX;
+	vector<double> MaxGCY;
+	vector<double> MaxGCZ;
+	vector<double> MinGCX;
+	vector<double> MinGCY;
+	vector<double> MinGCZ;
+	
 
+	/////////
 	// initialize calculation:
 	commontrajexact.trajstart=0;
 	commonelectrontraj.Errenergy=0.;    // energy error [eV]
 	commonelectrontraj.Time=0.;         // particle flight time [s]
 	
+	// calc the end of RxB for arbitrary ALPHA
 	double zRxBEnd = commonelectrontraj.R_1*cos((commonelectrontraj.alpha-90.)/180.*M_PI);
 	double yRxBEnd = -commonelectrontraj.R_1*sin((commonelectrontraj.alpha-90.)/180.*M_PI);
 	double zdetwAlpha = zRxBEnd + commonelectrontraj.zdetector*sin((commonelectrontraj.alpha-90.)/180.*M_PI);
@@ -458,6 +481,7 @@ void trajelectron1(double *x, double *v, int& electronindex){
 	commontrajexact.filepath = commonelectrontraj.filepath;
 	// Starting of Runge-Kutta loop:
 	for(istep=1; istep<=commonelectrontraj.numstepmax; istep++){
+		
 		// Runge-Kutta step:
 		trajexact(x,v);             // calculation of the x and v after the Runge-Kutta step
 		if(commontrajexact.index==1){
@@ -466,7 +490,6 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		}
 	
 		commonelectrontraj.Time+=commontrajexact.h;     // Advance the flight time clock
-		
 		// calculate parameters, that are required most of the time!
 		V=sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3]);
 		Phi=commontrajexact.Phi;                // Electric potential
@@ -482,9 +505,6 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		}
 		ThetaAdiab = ThetaLocal(commonelectrontraj.thetaStartmax, commonelectrontraj.Startb, b)/M_PI*180.; //in degree
 		theta=180./PI*acos(costheta);         // [deg]
-		
-		
-		
 		gam=1./sqrt(1.-V*V/(c*c));     // gamma factor:
 		for(i=1;i<=3;i++)p[i]=MASS*v[i]*gam;  // p: relativistic momentum
 		
@@ -505,9 +525,18 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		err=(commontrajexact.energy-energy0)/energy0; // calculation of energy error
 		if(fabs(err)>commonelectrontraj.Errenergy)commonelectrontraj.Errenergy=fabs(err);     // memorize the larges error
 	
+		// Z, R: z and r coordinates in m:  << setw(10) << Z << (10) << R
+		// b: magnetic field absolute value in T
+		// Phi: electric potential in V
+		// Ekin: kinetic energy in eV
+		// err: relative change of total energy
+		// commonelectrontraj.Time: time in s
 
 
-		// break the loop:
+
+		////////////////////////////////////////////////////////////////////////////////////////
+		// BREAK CONDITIONS OF LOOP
+		//////////////////////////////////////////////////////////////////////////////////////
 		// Time break
 		if(istep==commonelectrontraj.numstepmax || commonelectrontraj.Time>commonelectrontraj.Timemax){
 		    	cout << "TRAP BREAK" << endl;
@@ -585,14 +614,12 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		}
 		
 
-		// Z, R: z and r coordinates in m:  << setw(10) << Z << (10) << R
-		// b: magnetic field absolute value in T
-		// Phi: electric potential in V
-		// Ekin: kinetic energy in eV
-		// err: relative change of total energy
-		// commonelectrontraj.Time: time in s
 
 
+		////////////////////////////////////////////////////////////////////////////////////////
+		// SECTION ABOUT WRITING DATA AWAY
+		///////////////////////////////////////////////////////////////////////////////////////
+		// write away full track
 		if( commonelectrontraj.typeprint==1 ) {
 
 			// calculate guiding center and evaluate guiding center B-field as well
@@ -629,7 +656,9 @@ void trajelectron1(double *x, double *v, int& electronindex){
         		}
 		}
 
-
+		///////////////////////////////////////////////////////////////////////////////////////////////////
+		// NORMAL MONTE CARLO
+		// in case of normal Monte Carlo, we write away at aperture
 		//	first close point to aperture
 		if( commonelectrontraj.MonteCarlo ){ //for monte carlo, check if particle went through aperture or not
 			if( x[3] >= -0.3 && ZatApert == 0 ){ //for MonteCarlo, we get Aperture size by the global values ApertGridX/Y
@@ -653,11 +682,11 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		}
 
 
-
-		// for Cluster MC 
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// for CLUSTER MC 
 		if( commonelectrontraj.ClusterMC ){ 
 			
-			////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////
 			//writes away the pos at apert for manual cut later
 			if( x[3] >= -0.3 && ZatApert == 0 ){ 
 				ZatApert = 1;
@@ -674,13 +703,57 @@ void trajelectron1(double *x, double *v, int& electronindex){
 			//check for transition zones. start search after aperture
 			if( ZatApert == 1 ){
 
+				// for every check, we calc the new Delta THETA
+				commonelectrontraj.DeltaTheta = ThetaAdiab - theta; // in deg
+
+				
+				
+				
+				
+				///////////////////////////////////////////////////////
+				//ALTERNATIVE APPROACH just with storing all extrema and then compare to known plateau
+
+				//we search for extrema
+				// check the change of Delta Theta, if positive or negative
+				if( DeltaThetaOld <= commonelectrontraj.DeltaTheta ) DeltaThetaSignNew = 1;
+				else DeltaThetaSignNew = -1;
+
+				// if the old sign is positive and new sign is negative -> MaximumPoint
+				if( DeltaThetaSignNew == -1 && DeltaThetaSignOld == 1 ){
+					// save maximum value
+					MaximaValues.push_back(commonelectrontraj.DeltaTheta);
+					// calc guiding center and store
+					GuidingCenterFunc(x, v, B, costheta, gam, b, V, GuidX);
+					MaxGCX.push_back(GuidX[1]);
+					MaxGCY.push_back(GuidX[2]);
+					MaxGCZ.push_back(GuidX[3]);
+				}
+				// if the old sign is neg. and new sign is pos -> MinPoint
+				else if( DeltaThetaSignNew == 1 && DeltaThetaSignOld == -1 ){
+					MinimaValues.push_back(commonelectrontraj.DeltaTheta);
+					GuidingCenterFunc(x, v, B, costheta, gam, b, V, GuidX);
+					MinGCX.push_back(GuidX[1]);
+					MinGCY.push_back(GuidX[2]);
+					MinGCZ.push_back(GuidX[3]);
+				}
+				// after storing all those vectors, after the runge kutta loop, we extract the correct guiding centers with functions defined on the very bottom
+
+				// update the old values
+				DeltaThetaOld = commonelectrontraj.DeltaTheta;
+				DeltaThetaSignOld = DeltaThetaSignNew;
+
+
+
+				////////////////////////////////////////////////////////////////////
+				//old Variant
+
+				/*
+
 				// before TransitionZone 1
 				if( !TransitionZone1Start ){
-					commonelectrontraj.DeltaTheta = ThetaAdiab - theta; // in deg
+					
 					if( abs(commonelectrontraj.DeltaTheta) > Zone1LowThreshold_absolute ){
-
 						TransitionZone1Start = true;
-
 						// now we want the Guiding Center of the starting point
 						V_perpend = sin(acos(costheta)) * V;
 						if(CHARGE < 0) sign = -1.;
@@ -701,14 +774,16 @@ void trajelectron1(double *x, double *v, int& electronindex){
 					}
 				}
 
+
+
+
 				// now the case after TransitionZone 1 has started -> we need to save the extremal points of the oscillation
-				// then compare extremal points -> if slope between two extremal points is below a threshold -> Transition Zone end. FOR NOW, we check only maxima! (because minima dont follow
-				// same envelope necessarily!)
+				// then compare extremal points -> if slope between two extremal points is below a threshold -> Transition Zone end.
+				// FOR NOW, we check only maxima! (because minima dont followsame envelope necessarily!)
 				// start search after Transition Zone 1 has started, but has not ended yet!
 				// we can hardcode that the search for the transitionzone1End should only start after z > 0, we may safe some search time!
 				if( TransitionZone1Start && !TransitionZone1End && x[3] > 0. ){
 					
-					commonelectrontraj.DeltaTheta = ThetaAdiab - theta;
 					// check the change of Delta Theta, if positive or negative
 					if( DeltaThetaOld <= commonelectrontraj.DeltaTheta ) DeltaThetaSignNew = 1;
 					else DeltaThetaSignNew = -1;
@@ -781,12 +856,13 @@ void trajelectron1(double *x, double *v, int& electronindex){
 				}
 
 
+
+				/////////////////
 				// after Zone 1, along the envelope plateau, search start of 
 				// Zone 2 hasnt started yet
 				if( TransitionZone1End && !TransitionZone2Start ){
 					
 					//analogeous to end of Zone1, we have to check change of extrema
-					commonelectrontraj.DeltaTheta = ThetaAdiab - theta;
 					// check the change of Delta Theta, if positive or negative
 					if( DeltaThetaOld <= commonelectrontraj.DeltaTheta ) DeltaThetaSignNew = 1;
 					else DeltaThetaSignNew = -1;
@@ -839,13 +915,13 @@ void trajelectron1(double *x, double *v, int& electronindex){
 				} // end of if for start of transition Zone 2
 
 
+
 				/////////////////////////////
 				// Zone 2 has started, but not ended yet
 				// we cant just simply look at delta theta, because delta theta oscillates. we still have to check the extrema and go below a threshold!
 				if( TransitionZone2Start && !TransitionZone2End ){
 
 					//analogeous to end of Zone1, we have to check change of extrema
-					commonelectrontraj.DeltaTheta = ThetaAdiab - theta;
 					// check the change of Delta Theta, if positive or negative
 					if( DeltaThetaOld <= commonelectrontraj.DeltaTheta ) DeltaThetaSignNew = 1;
 					else DeltaThetaSignNew = -1;
@@ -890,9 +966,14 @@ void trajelectron1(double *x, double *v, int& electronindex){
 
 				} // end of if search for Zone 2 End
 
-			}
 
-		}
+				*/
+			
+
+			} // end of if for after aperture
+
+		} // end of if for CLUSTER MC
+
 
 
 
@@ -924,7 +1005,47 @@ void trajelectron1(double *x, double *v, int& electronindex){
 
 
 
-	}
+	} // end of runge kutta loop
+
+
+
+	// after the runge kutta loop, for Cluster MC, we analyse the extrema vectors for the transition zones
+	if(commonelectrontraj.ClusterMC){
+
+		// Trans1Start can use the same function for search as 1End, only with another threshold - due to definition of threshold, it is the inverted value, so bigger then the upper ones
+		POIMin = FindTransZone1EndPosMin( Zone1StartThreshold_rel, MinimaValues ); // so this threshold should be something like 0.8, meaning when extremum is higher then 0.2
+	       	//	relative to MaxCenter
+		POIMax = FindTransZone1EndPosMax( Zone1StartThreshold_rel, MaximaValues );
+		commonelectrontraj.TransitionZone1StartGC[1] = (MaxGCX[POIMax] + MinGCX[POIMin])/2;
+		commonelectrontraj.TransitionZone1StartGC[2] = (MaxGCY[POIMax] + MinGCY[POIMin])/2;
+		commonelectrontraj.TransitionZone1StartGC[3] = (MaxGCZ[POIMax] + MinGCZ[POIMin])/2;
+
+		// Trans1End 
+		POIMin = FindTransZone1EndPosMin( Zone1EndThreshold_rel, MinimaValues );
+		POIMax = FindTransZone1EndPosMax( Zone1EndThreshold_rel, MaximaValues );
+		commonelectrontraj.TransitionZone1EndGC[1] = (MaxGCX[POIMax] + MinGCX[POIMin])/2;
+		commonelectrontraj.TransitionZone1EndGC[2] = (MaxGCY[POIMax] + MinGCY[POIMin])/2;
+		commonelectrontraj.TransitionZone1EndGC[3] = (MaxGCZ[POIMax] + MinGCZ[POIMin])/2;
+
+		// Trans2Start 
+		POIMin = FindTransZone2StartPosMin( Zone2StartThreshold_rel, MinimaValues ); 
+		POIMax = FindTransZone2StartPosMax( Zone2StartThreshold_rel, MaximaValues );
+		commonelectrontraj.TransitionZone2StartGC[1] = (MaxGCX[POIMax] + MinGCX[POIMin])/2;
+		commonelectrontraj.TransitionZone2StartGC[2] = (MaxGCY[POIMax] + MinGCY[POIMin])/2;
+		commonelectrontraj.TransitionZone2StartGC[3] = (MaxGCZ[POIMax] + MinGCZ[POIMin])/2;
+
+		// Trans2End
+		// here we can again reuse the Zone2Start function just with another threshold - again invert value
+		POIMin = FindTransZone2StartPosMin( Zone2EndThreshold_rel, MinimaValues ); 
+		POIMax = FindTransZone2StartPosMax( Zone2EndThreshold_rel, MaximaValues );
+		commonelectrontraj.TransitionZone2EndGC[1] = (MaxGCX[POIMax] + MinGCX[POIMin])/2;
+		commonelectrontraj.TransitionZone2EndGC[2] = (MaxGCY[POIMax] + MinGCY[POIMin])/2;
+		commonelectrontraj.TransitionZone2EndGC[3] = (MaxGCZ[POIMax] + MinGCZ[POIMin])/2;
+
+
+
+	} // end of transition calcs for Cluster MC
+
 
 		
 	//cout << "end z" << x[3] << endl;
@@ -1204,9 +1325,130 @@ double PointDiff(double *x1, double *x2){
 //}
 
 
+void GuidingCenterFunc(double *x, double *v, double *B, double costheta, double gamma, double b_norm, double v_norm, double *GC){
+	
+	double sign;
+	double V_perpend;
+	double CrossP[4];
+	double gyraR;
+	double CrossPL;
 
+	V_perpend = sin(acos(costheta)) * v_norm;
+	if(CHARGE < 0) sign = -1.;
+	else sign = 1.;
+	gyraR = gamma * MASS * V_perpend/ 1.602177e-19 / b_norm;
+	// v x B
+	CrossP[1] = B[3]*v[2] - B[2]*v[3];
+	CrossP[2] = -B[3]*v[1] + B[1]*v[3];
+	CrossP[3] = B[2]*v[1] - B[1]*v[2];
+	CrossPL = sqrt(CrossP[1]*CrossP[1] + CrossP[2]*CrossP[2] + CrossP[3]*CrossP[3]);
+	if( CrossPL < 1e-12 ){
+		for(int i=1;i<=3;i++){GC[i] = x[i];}
+	}
+	else{
+		for(int i=1;i<=3;i++){GC[i] = x[i] + sign* CrossP[i]/CrossPL * gyraR;};
+	}
 
+}
 
 
 
 ////////////////////////////////
+// search max of a vector and return position
+
+int VectorFindMax(vector<double> &MaxList){
+
+	double MaxVal = 0.;
+	int MaxIt = 0;
+	for( int i = 0; i < MaxList.size(); i++){
+		if(MaxList[i] > MaxVal){
+		       MaxIt = i;
+		       MaxVal = MaxList[i];
+		}
+	}
+
+	return MaxIt;
+}
+
+
+////////////////////////////////
+// search max of a vector and return position
+int VectorFindMin(vector<double> &MinList){
+
+	double MinVal = 0.;
+	int MinIt = 0;
+	for( int i = 0; i < MinList.size(); i++){
+		if(MinList[i] < MinVal){
+		       MinIt = i;
+		       MinVal = MinList[i];
+		}
+	}
+
+	return MinIt;
+}
+
+
+///////////////////////////////////////
+// give position of TransitionZone1End by giving relative threshold relative to the plateau given my the max value of Extrema
+// we search both in the minima list as well as maxima list and combine the results by averaging the Guiding center positions of the found points
+// we separate in two functions for min and max so that we can just return one integer each
+int FindTransZone1EndPosMax( double Threshold, vector<double> &MaxList ){
+
+	double MaxCenter = MaxList[ MaxList.size()/2 ]; // gives center Maximum - rounded down always (int)
+	int i = 0;
+	for( i = 0; i < MaxList.size(); i++ ){
+		if( (MaxCenter - MaxList[i])/MaxCenter < Threshold ) break;
+	}
+
+	return i;
+}
+
+int FindTransZone1EndPosMin( double Threshold, vector<double> &MinList ){
+
+	double MinCenter = MinList[ MinList.size()/2 ]; // gives center Maximum - rounded down always (int)
+	int i = 0;
+	for( i = 0; i < MinList.size(); i++ ){
+		if( (MinCenter - MinList[i])/MinCenter < Threshold ) break;
+	}
+
+	return i;
+}
+
+
+/////////////////////////////////////////
+//for start of Zone 2, we consider relative to the maximum value of maxima etc.
+int FindTransZone2StartPosMax( double Threshold, vector<double> &MaxList ){
+
+	int MaxMaxPos = VectorFindMax( MaxList );
+	double MaxMax = MaxList[MaxMaxPos]; // gives Maximum of Maxima 
+	int i = 0;
+	for( i = MaxMaxPos; i < MaxList.size(); i++ ){
+		if( (MaxMax - MaxList[i])/MaxMax > Threshold ) break;
+	}
+
+	return i;
+}
+
+int FindTransZone2StartPosMin( double Threshold, vector<double> &MinList ){
+
+	int MinMinPos = VectorFindMin( MinList );
+	double MinMin = MinList[MinMinPos]; // gives Maximum of Maxima 
+	int i = 0;
+	for( i = MinMinPos; i < MinList.size(); i++ ){
+		if( (MinMin - MinList[i])/MinMin > Threshold ) break;
+	}
+
+	return i;
+}
+
+
+
+
+
+
+
+
+
+
+
+

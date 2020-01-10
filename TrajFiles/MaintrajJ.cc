@@ -10,6 +10,7 @@
 #include <sstream>                      // for stringstream
 //#include <random>
 #include <time.h>
+#include <vector>
 
 using namespace std;
 
@@ -916,7 +917,7 @@ int main(int argc, char ** argv, char* envp[])
 	counter = 0;
 	while ( MonteCarloData >> buffer1 >> buffer2 >> buffer3 >> commonelectrontraj.thetaStartmax >> commonelectrontraj.Startphi >> commonelectrontraj.Ekin ){
 	    //cout << endl << "TRAJ: Decay#: " << counter << endl;	    
-	    counter ++;
+	    //counter ++;
 	
 	
 	    // if theta is greater than 45°, filter will reflect -> cutoff
@@ -954,7 +955,7 @@ int main(int argc, char ** argv, char* envp[])
 	   	trajelectronN(conclusionfilename,1,0., MonteCarloOut ); //filenam, N, startgyraR, apertYshift,apertXshift
 	
 	    }
-	    else cout << "MonteCarloBug: theta > 45" << endl;
+	    //else cout << "MonteCarloBug: theta > 45" << endl;
 	    
 
 	} //closing the while loop
