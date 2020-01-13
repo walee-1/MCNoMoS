@@ -870,7 +870,13 @@ int main(int argc, char ** argv, char* envp[])
 	// define output file
 	OutStringStream.str("");
 	ofstream MonteCarloOut;
-	OutStringStream << commonelectrontraj.filepath << "MonteCarlo/"  << "DetectorData"+ filenr.str() +".txt";
+	string MCOutDir;
+	// here we use another argument from main, to have the MonteCarlo folder chooseable, independent of B-field files
+	if(argc <5) {cout << "TRAJ: no MCOut DIR given!" << endl; return 1;}
+	MCOutDir = argv[4];
+	cout << "TRAJ: MCOutDir given: " << MCOutDir << endl;
+
+	OutStringStream << MCOutDir << "MonteCarlo/"  << "DetectorData"+ filenr.str() +".txt";
 	conclusionfilename = OutStringStream.str(); // conclusionfilename is just reused here for opening the files
 	MonteCarloOut.open(conclusionfilename.c_str(),ios::out);
 	// Header
