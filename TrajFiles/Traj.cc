@@ -1012,36 +1012,37 @@ void trajelectron1(double *x, double *v, int& electronindex){
 	// after the runge kutta loop, for Cluster MC, we analyse the extrema vectors for the transition zones
 	if(commonelectrontraj.ClusterMC){
 
-		// Trans1Start can use the same function for search as 1End, only with another threshold - due to definition of threshold, it is the inverted value, so bigger then the upper ones
-		POIMin = FindTransZone1EndPosMin( Zone1StartThreshold_rel, MinimaValues ); // so this threshold should be something like 0.8, meaning when extremum is higher then 0.2
-	       	//	relative to MaxCenter
-		POIMax = FindTransZone1EndPosMax( Zone1StartThreshold_rel, MaximaValues );
-		commonelectrontraj.TransitionZone1StartGC[1] = (MaxGCX[POIMax] + MinGCX[POIMin])/2;
-		commonelectrontraj.TransitionZone1StartGC[2] = (MaxGCY[POIMax] + MinGCY[POIMin])/2;
-		commonelectrontraj.TransitionZone1StartGC[3] = (MaxGCZ[POIMax] + MinGCZ[POIMin])/2;
+		if( !MaximaValues.empty() && !MinimaValues.empty() ){ // in specific cases, there might not be extrema??? then don't go into calcs with the vectors!
+			// Trans1Start can use the same function for search as 1End, only with another threshold - due to definition of threshold, it is the inverted value, so bigger then the upper ones
+			POIMin = FindTransZone1EndPosMin( Zone1StartThreshold_rel, MinimaValues ); // so this threshold should be something like 0.8, meaning when extremum is higher then 0.2
+	       		//	relative to MaxCenter
+			POIMax = FindTransZone1EndPosMax( Zone1StartThreshold_rel, MaximaValues );
+			commonelectrontraj.TransitionZone1StartGC[1] = (MaxGCX[POIMax] + MinGCX[POIMin])/2;
+			commonelectrontraj.TransitionZone1StartGC[2] = (MaxGCY[POIMax] + MinGCY[POIMin])/2;
+			commonelectrontraj.TransitionZone1StartGC[3] = (MaxGCZ[POIMax] + MinGCZ[POIMin])/2;
 
-		// Trans1End 
-		POIMin = FindTransZone1EndPosMin( Zone1EndThreshold_rel, MinimaValues );
-		POIMax = FindTransZone1EndPosMax( Zone1EndThreshold_rel, MaximaValues );
-		commonelectrontraj.TransitionZone1EndGC[1] = (MaxGCX[POIMax] + MinGCX[POIMin])/2;
-		commonelectrontraj.TransitionZone1EndGC[2] = (MaxGCY[POIMax] + MinGCY[POIMin])/2;
-		commonelectrontraj.TransitionZone1EndGC[3] = (MaxGCZ[POIMax] + MinGCZ[POIMin])/2;
+			// Trans1End 
+			POIMin = FindTransZone1EndPosMin( Zone1EndThreshold_rel, MinimaValues );
+			POIMax = FindTransZone1EndPosMax( Zone1EndThreshold_rel, MaximaValues );
+			commonelectrontraj.TransitionZone1EndGC[1] = (MaxGCX[POIMax] + MinGCX[POIMin])/2;
+			commonelectrontraj.TransitionZone1EndGC[2] = (MaxGCY[POIMax] + MinGCY[POIMin])/2;
+			commonelectrontraj.TransitionZone1EndGC[3] = (MaxGCZ[POIMax] + MinGCZ[POIMin])/2;
 
-		// Trans2Start 
-		POIMin = FindTransZone2StartPosMin( Zone2StartThreshold_rel, MinimaValues ); 
-		POIMax = FindTransZone2StartPosMax( Zone2StartThreshold_rel, MaximaValues );
-		commonelectrontraj.TransitionZone2StartGC[1] = (MaxGCX[POIMax] + MinGCX[POIMin])/2;
-		commonelectrontraj.TransitionZone2StartGC[2] = (MaxGCY[POIMax] + MinGCY[POIMin])/2;
-		commonelectrontraj.TransitionZone2StartGC[3] = (MaxGCZ[POIMax] + MinGCZ[POIMin])/2;
+			// Trans2Start 
+			POIMin = FindTransZone2StartPosMin( Zone2StartThreshold_rel, MinimaValues ); 
+			POIMax = FindTransZone2StartPosMax( Zone2StartThreshold_rel, MaximaValues );
+			commonelectrontraj.TransitionZone2StartGC[1] = (MaxGCX[POIMax] + MinGCX[POIMin])/2;
+			commonelectrontraj.TransitionZone2StartGC[2] = (MaxGCY[POIMax] + MinGCY[POIMin])/2;
+			commonelectrontraj.TransitionZone2StartGC[3] = (MaxGCZ[POIMax] + MinGCZ[POIMin])/2;
 
-		// Trans2End
-		// here we can again reuse the Zone2Start function just with another threshold - again invert value
-		POIMin = FindTransZone2StartPosMin( Zone2EndThreshold_rel, MinimaValues ); 
-		POIMax = FindTransZone2StartPosMax( Zone2EndThreshold_rel, MaximaValues );
-		commonelectrontraj.TransitionZone2EndGC[1] = (MaxGCX[POIMax] + MinGCX[POIMin])/2;
-		commonelectrontraj.TransitionZone2EndGC[2] = (MaxGCY[POIMax] + MinGCY[POIMin])/2;
-		commonelectrontraj.TransitionZone2EndGC[3] = (MaxGCZ[POIMax] + MinGCZ[POIMin])/2;
-
+			// Trans2End
+			// here we can again reuse the Zone2Start function just with another threshold - again invert value
+			POIMin = FindTransZone2StartPosMin( Zone2EndThreshold_rel, MinimaValues ); 
+			POIMax = FindTransZone2StartPosMax( Zone2EndThreshold_rel, MaximaValues );
+			commonelectrontraj.TransitionZone2EndGC[1] = (MaxGCX[POIMax] + MinGCX[POIMin])/2;
+			commonelectrontraj.TransitionZone2EndGC[2] = (MaxGCY[POIMax] + MinGCY[POIMin])/2;
+			commonelectrontraj.TransitionZone2EndGC[3] = (MaxGCZ[POIMax] + MinGCZ[POIMin])/2;
+		}
 
 
 	} // end of transition calcs for Cluster MC
