@@ -39,6 +39,8 @@ struct typeelectrontraj{
 	double TransitionZone1EndGC[4];
 	double TransitionZone2StartGC[4];
 	double TransitionZone2EndGC[4];
+	double b_Max_X[4];
+	double b_Max= 0.;
     
 	// Parameters of the starting disk = source of the particles representing an appertur or a beam
         double Xstart, ApertGridX;          // x-coordinat of the starting disk center [m]
@@ -245,11 +247,15 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 
 		// we write out StartP, Ekin, StartPhase (2 methods), BDV	
 		OutStream << commonelectrontraj.Xstart << "\t"<< commonelectrontraj.Ystart << "\t" << commonelectrontraj.Zstart << "\t";
-	        OutStream << commontrajexact.Ekin << "\t" << commonelectrontraj.StartPhase << "\t" << commonelectrontraj.StartPhase2 << "\t" << commonelectrontraj.Startb << "\t";
+	        OutStream << commontrajexact.Ekin << "\t" << commonelectrontraj.thetaStartmax << "\t";
+	        OutStream << commonelectrontraj.StartPhase << "\t" << commonelectrontraj.StartPhase2 << "\t" << commonelectrontraj.Startb << "\t";
 
-		//reuse Startb for norm at Detector
-		commonelectrontraj.Startb = sqrt(commonelectrontraj.DetB[1]*commonelectrontraj.DetB[1] +commonelectrontraj.DetB[2]*commonelectrontraj.DetB[2] +commonelectrontraj.DetB[3]*commonelectrontraj.DetB[3]);
 		//
+		// we write away Filter point and B_F
+		OutStream << commonelectrontraj.b_Max_X[1] << "\t" << commonelectrontraj.b_Max_X[2] << "\t" << commonelectrontraj.b_Max_X[3] << "\t";
+		OutStream << commonelectrontraj.b_Max << "\t";
+
+
 		// we write away ApertPoint, Apert Phase, B_A
 		OutStream << commonelectrontraj.ApertGridX << "\t"<< commonelectrontraj.ApertGridY << "\t" << commonelectrontraj.ApertGridZ << "\t";
 		OutStream << commonelectrontraj.ApertPhase << "\t" << commonelectrontraj.Apertb << "\t";
@@ -261,7 +267,9 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 		//we write away transition zone 2 data: Start GC, EndGC
 		OutStream << commonelectrontraj.TransitionZone2StartGC[1] << "\t" << commonelectrontraj.TransitionZone2StartGC[2] << "\t" << commonelectrontraj.TransitionZone2StartGC[3] << "\t";
 		OutStream << commonelectrontraj.TransitionZone2EndGC[1] << "\t" << commonelectrontraj.TransitionZone2EndGC[2] << "\t" << commonelectrontraj.TransitionZone2EndGC[3] << "\t";
-
+		
+		//reuse Startb for norm at Detector
+		commonelectrontraj.Startb = sqrt(pow(commonelectrontraj.DetB[1],2) + pow(commonelectrontraj.DetB[2],2) + pow(commonelectrontraj.DetB[3],2));
 		//we write away detector data: DetPoint, DetPhase, B_Det
 		OutStream << x[1] << "\t" << x[2] << "\t" << x[3] << "\t";
 		OutStream << PhaseAngleFunc(v, commonelectrontraj.DetB, -1) << "\t" << commonelectrontraj.Startb;
@@ -470,6 +478,8 @@ void trajelectron1(double *x, double *v, int& electronindex){
 	commontrajexact.trajstart=0;
 	commonelectrontraj.Errenergy=0.;    // energy error [eV]
 	commonelectrontraj.Time=0.;         // particle flight time [s]
+
+	commonelectrontraj.b_Max = 0.;
 	
 	// calc the end of RxB for arbitrary ALPHA
 	double zRxBEnd = commonelectrontraj.R_1*cos((commonelectrontraj.alpha-90.)/180.*M_PI);
@@ -686,6 +696,19 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		// for CLUSTER MC 
 		if( commonelectrontraj.ClusterMC ){ 
 			
+			////////////////////////////////////////////
+			// searches for Bfield maximum before aperture so that one can find 
+			if ( ZatApert == 0 ){
+				if( b > commonelectrontraj.b_Max ){
+					commonelectrontraj.b_Max = b;
+					commonelectrontraj.b_Max_X[1] = x[1];
+					commonelectrontraj.b_Max_X[2] = x[2];
+					commonelectrontraj.b_Max_X[3] = x[3];
+				}
+
+			}
+
+
 			/////////////////////////////////////////////
 			//writes away the pos at apert for manual cut later
 			if( x[3] >= -0.3 && ZatApert == 0 ){ 

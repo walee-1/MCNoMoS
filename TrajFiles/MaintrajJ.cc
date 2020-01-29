@@ -832,6 +832,7 @@ int main(int argc, char ** argv, char* envp[])
 
 	double B_DV[4], B_A[4], testpos[4], n[4], velo[4];
 	double B_DV_abs, B_A_abs;
+	double thetamax_rad;
 	double r_A, sqrt_r_A, v, V_perpend, StartgyraR, gam;
     	double c=299792458.;  // velocity of light in SI units
 
@@ -857,7 +858,8 @@ int main(int argc, char ** argv, char* envp[])
         string SpectraDir;
         double buffer1, buffer2, buffer3;
 	stringstream filenr;
-	SpectraDir = "/data1/dmoser/Spectra1e7_1e4/";
+	if( PCName == "smigrid" ) SpectraDir = "/data1/dmoser/Spectra1e7_1e4/";
+	else if( PCName == "CLIP" ) SpectraDir = "/scratch-cbe/users/daniel.moser/Spectra1e7_1e4_2/";
         string SpectraNr;
 	
 	filenr.str(""); // clearing the stringstream before each iteration
@@ -880,7 +882,8 @@ int main(int argc, char ** argv, char* envp[])
 	conclusionfilename = OutStringStream.str(); // conclusionfilename is just reused here for opening the files
 	MonteCarloOut.open(conclusionfilename.c_str(),ios::out);
 	// Header
-	MonteCarloOut << "XStart" << "\t" << "YStart" << "\t" << "ZStart" << "\t" << "Ekin" << "\t" << "DVPhase1" << "\t" << "DVPhase2" << "\t" << "BDV" << "\t";
+	MonteCarloOut << "XStart" << "\t" << "YStart" << "\t" << "ZStart" << "\t" << "Ekin" << "\t" << "ThetaStart" << "\t" << "DVPhase1" << "\t" << "DVPhase2" << "\t" << "BDV" << "\t";
+	MonteCarloOut << "BMAXX" << "\t" << "BMAXY" << "\t" << "BMAXZ" << "\t" << "BMAX" << "\t";
         MonteCarloOut << "ApertX" << "\t" << "ApertY" << "\t" << "ApertZ" << "\t" << "ApertPhase" << "\t" << "BApert" << "\t";
 	MonteCarloOut << "TZ1StartGCX" << "\t" << "TZ1StartGCY" << "\t" << "TZ1StartGCZ" << "\t";
 	MonteCarloOut << "TZ1EndGCX" << "\t" << "TZ1EndGCY" << "\t" << "TZ1EndGCZ" << "\t";
@@ -906,6 +909,8 @@ int main(int argc, char ** argv, char* envp[])
 	n[2] = B_DV[2]/B_DV_abs;
 	n[3] = B_DV[3]/B_DV_abs;
 
+	if( PercOn ) thetamax_rad = 30/180.*M_PI;
+	else thetamax_rad = 45/180.*M_PI;
 	// now we calc the range of values that are allowed in X and Y
 	// first, scale the aperture window to DV
 	DVwindow_X = ApertX * sqrt_r_A;
