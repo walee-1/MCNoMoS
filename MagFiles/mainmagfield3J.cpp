@@ -622,14 +622,13 @@ int main(int argc,char** argv, char* envp[] )
 	double blineStartZ;
 
        	if( ! Perc_on ){
-		if( Conductor == "NL" ){
+		if( Conductor == "NL" || Conductor == "TTSL" ){
 
 		blineStartZ = -l_coil_RxB/2. - RxBtoIn_d - l_coil_af_inlet*2 - d_af_inlet - af_screw_gap - (d_af_inlet+l_coil_af_inlet)*((double)n_af_inlet-3.) - l_coil_af_inlet;
 	       	blineStartZ = blineStartZ - FIntoAFIn_d - l_coil_filter_inlet - FIntoBFIn_d - (d_bf_inlet+l_coil_bf_inlet)*((double)n_bf_inlet-2.) - l_coil_bf_inlet - bf_screw_gap;
 	      	blineStartZ = blineStartZ - l_coil_bf_inlet -helm1_bf_gap - l_coil_helm1 -  pumpport_distance/2.;
-
-
 		}
+
 
 		//now we overwrite this, in case we want a manual Z start
 		if( boolManualStartZ ) blineStartZ = manualStartZ;
