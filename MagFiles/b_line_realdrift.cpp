@@ -29,10 +29,15 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 	int max_coord;
 	int button = 0;
 
+	RxB_vec[1]=0.;
+	RxB_vec[2]=0.;
+	RxB_vec[3]=0.;
+	drift1st = 0.;
+
 	
 	// Adjustable:
 	double step_size = 1.e-3;  // point distance in [m]
-	int n_loops = 10;         // number of loops, when values are written
+	int n_loops = 0;         // number of loops, when values are written, if 0, every point written away
 	int i_loop;	
 
 	// calc startpoints
@@ -124,7 +129,7 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 		P[2] = R_1 + startP[1][line] + apertYshift;
 		P[3] = start_posZ;
 		counter = 0;
-		cout << "BlineBUG: startP = " << P[1] << "\t" << P[2] << "\t" << P[3] << endl;
+		//cout << "BlineBUG: startP = " << P[1] << "\t" << P[2] << "\t" << P[3] << endl;
 			
 		angle =0.;
 		i_loop = n_loops;   // loop counter, final value at beginning so that first point is definitely written 
@@ -145,7 +150,9 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 		      		fileout << P[1] <<"\t"<< P[2]<<"\t"<< P[3];
 		      		// store the B-field values in the datapoint
 	      			fileout <<"\t"<< b <<"\t"<< B[1] <<"\t"<< B[2] <<"\t"<< B[3] << "\t" << angle;
-			       	if(driftOn == 2) fileout << "\t" << R_A	<< "\n";
+				// we write out the RxB drift contribution per point
+			       	if(driftOn == 1) fileout << "\t" << RxB_vec[1]*drift1st << "\t" << RxB_vec[2]*drift1st << "\t" << RxB_vec[3]*drift1st; 
+				if(driftOn == 2) fileout << "\t" << R_A	<< "\n";
 				else fileout << "\n";
 				i_loop = 0;
 			} else {i_loop++;}
@@ -175,8 +182,10 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 	      			// store the datapoint's position
 		      		fileout << P_old[1] <<"\t"<< P_old[2]<<"\t"<< P_old[3];
 		      		// store the B-field values in the datapoint
-	      			fileout <<"\t"<< b <<"\t"<< B[1] <<"\t"<< B[2] <<"\t"<< B[3] << "\n" ;
-				break;
+	      			fileout <<"\t"<< b <<"\t"<< B[1] <<"\t"<< B[2] <<"\t"<< B[3];
+			       	if(driftOn == 1) fileout << "\t" << RxB_vec[1]*drift1st << "\t" << RxB_vec[2]*drift1st << "\t" << RxB_vec[3]*drift1st; 
+				fileout  << "\n";
+			       	break;
 			}
 			/////////////////////////////////////
 			counter = counter +1;
