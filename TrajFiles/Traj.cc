@@ -34,13 +34,19 @@ struct typeelectrontraj{
 	double StartPhase, ApertPhase, DetPhase, StartPhase2;
 	double Apertb, Startb;
 	double DetB[4], StartB[4];
+	
+	// following the parameters for transition zone calc in Cluster MC, commented out now
+/*
 	double DeltaTheta;
 	double TransitionZone1StartGC[4];
 	double TransitionZone1EndGC[4];
 	double TransitionZone2StartGC[4];
 	double TransitionZone2EndGC[4];
+*/
 	double b_Max_X[4];
 	double b_Max= 0.;
+	double b_RxB = 0.;
+	int RxBCounter = 0;
     
 	// Parameters of the starting disk = source of the particles representing an appertur or a beam
         double Xstart, ApertGridX;          // x-coordinat of the starting disk center [m]
@@ -237,6 +243,7 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 
 		// Electron generator:
 		electrongeneration(x,v,commonelectrontraj.Startphi);            // sets initial condition for x and v, also phi setable
+		
 		commonelectrontraj.Startb = sqrt(commonelectrontraj.StartB[1]*commonelectrontraj.StartB[1] +commonelectrontraj.StartB[2]*commonelectrontraj.StartB[2] +commonelectrontraj.StartB[3]*commonelectrontraj.StartB[3]);
 		commonelectrontraj.StartPhase = commonelectrontraj.Startphi+M_PI;// investigating velocity(), we see that phi of v is just a phase offset to phase of starting position	
 		// StartB is written in electronstart, to be used as cross check to PhaseAngleFunc with Bfield vector
@@ -260,6 +267,9 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 		OutStream << commonelectrontraj.ApertGridX << "\t"<< commonelectrontraj.ApertGridY << "\t" << commonelectrontraj.ApertGridZ << "\t";
 		OutStream << commonelectrontraj.ApertPhase << "\t" << commonelectrontraj.Apertb << "\t";
 
+
+		// following are the transition zone parameters, commented out now
+/*
 		//we write away transition zone 1 data: Start GC, EndGC
 		OutStream << commonelectrontraj.TransitionZone1StartGC[1] << "\t" << commonelectrontraj.TransitionZone1StartGC[2] << "\t" << commonelectrontraj.TransitionZone1StartGC[3] << "\t";
 		OutStream << commonelectrontraj.TransitionZone1EndGC[1] << "\t" << commonelectrontraj.TransitionZone1EndGC[2] << "\t" << commonelectrontraj.TransitionZone1EndGC[3] << "\t";
@@ -267,7 +277,10 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 		//we write away transition zone 2 data: Start GC, EndGC
 		OutStream << commonelectrontraj.TransitionZone2StartGC[1] << "\t" << commonelectrontraj.TransitionZone2StartGC[2] << "\t" << commonelectrontraj.TransitionZone2StartGC[3] << "\t";
 		OutStream << commonelectrontraj.TransitionZone2EndGC[1] << "\t" << commonelectrontraj.TransitionZone2EndGC[2] << "\t" << commonelectrontraj.TransitionZone2EndGC[3] << "\t";
-		
+*/		
+		// write out mean BRxB
+		OutStream << commonelectrontraj.b_RxB/(double)commonelectrontraj.RxBCounter << "\t";
+
 		//reuse Startb for norm at Detector
 		commonelectrontraj.Startb = sqrt(pow(commonelectrontraj.DetB[1],2) + pow(commonelectrontraj.DetB[2],2) + pow(commonelectrontraj.DetB[3],2));
 		//we write away detector data: DetPoint, DetPhase, B_Det
@@ -441,6 +454,9 @@ void trajelectron1(double *x, double *v, int& electronindex){
 	int ZatApert = 0;
 	double sign;
 
+
+	// following are the transition zone variable initializations, commented out now!
+/*	
 	// variables for Transition Zone Investigations
 	double ThetaAdiab;
 	//bool TransitionZone1Start = false;
@@ -471,7 +487,7 @@ void trajelectron1(double *x, double *v, int& electronindex){
 	vector<double> MinGCX;
 	vector<double> MinGCY;
 	vector<double> MinGCZ;
-	
+*/	
 
 	/////////
 	// initialize calculation:
@@ -513,7 +529,11 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		if( fabs(costheta - 1.) < 10.e-12 ){
 			costheta = 1.;
 		}
-		ThetaAdiab = ThetaLocal(commonelectrontraj.thetaStartmax, commonelectrontraj.Startb, b)/M_PI*180.; //in degree
+		
+		// theta adiab only needed for Cluster MC transition zone, commented out now
+//		ThetaAdiab = ThetaLocal(commonelectrontraj.thetaStartmax, commonelectrontraj.Startb, b)/M_PI*180.; //in degree
+		
+		
 		theta=180./PI*acos(costheta);         // [deg]
 		gam=1./sqrt(1.-V*V/(c*c));     // gamma factor:
 		for(i=1;i<=3;i++)p[i]=MASS*v[i]*gam;  // p: relativistic momentum
@@ -721,7 +741,28 @@ void trajelectron1(double *x, double *v, int& electronindex){
 				commonelectrontraj.Apertb = b;
 				commonelectrontraj.ApertPhase = PhaseAngleFunc(v, B, -1);
 			}
+
+
+			/////////////////////////////////////
+			// evaluates mean BRxB value by summing up all steps and devide by steps
+			// for now, in geometrically defined RxB region
+			// to make it easier, we go in bulks of 90°
+			if( x[3] >= 0. && x[2] >=0. ){
+				commonelectrontraj.b_RxB += b;
+				commonelectrontraj.RxBCounter += 1;
+			}
+			// after the first 90°, we now check if RxB alpha is 180°, if so, consider second quadrant
+			if( x[2] < 0. && x[3] > 0. && commonelectrontraj.alpha == 180. ){
+				commonelectrontraj.b_RxB += b;
+				commonelectrontraj.RxBCounter += 1;
+			}
+
 			
+
+			///////////////////////////////////////////////////////////////////////////////////////////////////
+			// here begins the Transition zone calc, commented out now!
+
+/*
 			///////////////////////////////////////////////////////////////
 			//check for transition zones. start search after aperture
 			if( ZatApert == 1 ){
@@ -764,7 +805,7 @@ void trajelectron1(double *x, double *v, int& electronindex){
 				// update the old values
 				DeltaThetaOld = commonelectrontraj.DeltaTheta;
 				DeltaThetaSignOld = DeltaThetaSignNew;
-
+*/
 
 
 				////////////////////////////////////////////////////////////////////
@@ -992,9 +1033,9 @@ void trajelectron1(double *x, double *v, int& electronindex){
 
 				*/
 			
-
+/*
 			} // end of if for after aperture
-
+*/
 		} // end of if for CLUSTER MC
 
 
@@ -1031,7 +1072,9 @@ void trajelectron1(double *x, double *v, int& electronindex){
 	} // end of runge kutta loop
 
 
-
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	//here is transition zone analysis, commented out now
+/*
 	// after the runge kutta loop, for Cluster MC, we analyse the extrema vectors for the transition zones
 	if(commonelectrontraj.ClusterMC){
 
@@ -1069,7 +1112,7 @@ void trajelectron1(double *x, double *v, int& electronindex){
 
 
 	} // end of transition calcs for Cluster MC
-
+*/
 
 		
 	//cout << "end z" << x[3] << endl;
