@@ -1,4 +1,4 @@
-void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool onlyCornerCenter, int horilines, int vertilines, double apertsizeX, double apertsizeY, double apertYshift,double apertXshift, string inputcoil, string filedir, int prep,int driftdir,double momentum,int driftOn, double detposZ)
+void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool onlyCornerCenter, int horilines, int vertilines, double apertsizeX, double apertsizeY, double apertYshift,double apertXshift, string inputcoil, string filedir, int prep,int driftdir,double momentum, double theta,int driftOn, double detposZ)
 {
 	//parameters: R1, startZ, .., .. , .. , .., inputcoil, filedir, magfield prep, maxdrift, driftOn: X Drift nach winkel dazu addieren, projection ON/OFF: X = xdrift+BX oder ohne BX, detposZ
 	
@@ -6,13 +6,13 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 	double ffactor(double);
 	double localtheta(double, double, double);
 	double c= 299792458; // light speed
-	double thetaEm = 20./180.*M_PI; // emission angle for f()
+	double thetaEm = theta/180.*M_PI; // emission angle for f()
 	double B[4];          // B-field components [T]
 	double P[4];          // Descartes coordinates [m]
 	double RxBEnd[4];
 	double P_old[4];   // Descartes coordinates [m]
 	double B_old[4];
-	double m_e = 510998.;
+	double m_e = 510998.95;
 	double planevec[4];
 	double planevec_B[4];
 	double planevec_B_length, planevec_length, n_length, n_old_length, n_new_length;
@@ -22,6 +22,7 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 	double B_new[4];
 	double P_new[4], diff_vec[4];
    double RxB_vec[4], RxB_vec_new[4];
+   	double RxB_vec_norm=1.;
 	double v1st_A, v1st_B;
 	double b, b_old, b_new, R_A=0., R_B, startB;
 	double angle;
@@ -36,9 +37,10 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 
 	
 	// Adjustable:
-	double step_size = 1.e-3;  // point distance in [m]
-	int n_loops = 0;         // number of loops, when values are written, if 0, every point written away
+	double step_size = 5.e-4;  // point distance in [m]
+	int n_loops = 5;         // number of loops, when values are written, if 0, every point written away
 	int i_loop;	
+	int maxsteps = 20000;
 
 	// calc startpoints
 	int lines;
@@ -60,8 +62,8 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 				counter ++;
 			}
 		}
-		cout << "BLINEBUG: startPs" << endl;
-		for(int i=0;i<5;i++) cout << startP[0][i] << "\t" << startP[1][i] << endl;
+		//cout << "BLINEBUG: startPs" << endl;
+		//for(int i=0;i<5;i++) cout << startP[0][i] << "\t" << startP[1][i] << endl;
 	}
 	else{
 		double xstep, ystep;
@@ -110,7 +112,7 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 		// open outputfile
 		std::string fileoutname;
 		std::stringstream fieldstream;
-		fieldstream << prefix << "X" << startP[0][line] << "_Y"<< startP[1][line] << ".txt";
+		fieldstream << prefix << "X" << startP[0][line] << "_Y"<< startP[1][line] << "_P" << std::setprecision(5) <<  momentum << "_TH" << theta << ".txt";
 		fieldstream >> fileoutname;
 		fileoutname = filedir + fileoutname;
 		ofstream fileout;
@@ -135,7 +137,7 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 		i_loop = n_loops;   // loop counter, final value at beginning so that first point is definitely written 
 		// calculate B-field values at every step on the cut line:
 		bool atDet= false;
-		while ( !atDet ) {
+		while ( !atDet && counter < maxsteps ) {
 			
 			// calculating the B-field
 			magfield_elliptic(P,B,filedir);
@@ -151,7 +153,7 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 		      		// store the B-field values in the datapoint
 	      			fileout <<"\t"<< b <<"\t"<< B[1] <<"\t"<< B[2] <<"\t"<< B[3] << "\t" << angle;
 				// we write out the RxB drift contribution per point
-			       	if(driftOn == 1) fileout << "\t" << RxB_vec[1]*drift1st << "\t" << RxB_vec[2]*drift1st << "\t" << RxB_vec[3]*drift1st; 
+			       	if(driftOn == 1) fileout << "\t" << RxB_vec[1]/RxB_vec_norm*drift1st << "\t" << RxB_vec[2]/RxB_vec_norm*drift1st << "\t" << RxB_vec[3]/RxB_vec_norm*drift1st; 
 				if(driftOn == 2) fileout << "\t" << R_A	<< "\n";
 				else fileout << "\n";
 				i_loop = 0;
@@ -182,8 +184,8 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 	      			// store the datapoint's position
 		      		fileout << P_old[1] <<"\t"<< P_old[2]<<"\t"<< P_old[3];
 		      		// store the B-field values in the datapoint
-	      			fileout <<"\t"<< b <<"\t"<< B[1] <<"\t"<< B[2] <<"\t"<< B[3];
-			       	if(driftOn == 1) fileout << "\t" << RxB_vec[1]*drift1st << "\t" << RxB_vec[2]*drift1st << "\t" << RxB_vec[3]*drift1st; 
+	      			fileout <<"\t"<< b <<"\t"<< B[1] <<"\t"<< B[2] <<"\t"<< B[3] << "\t" << angle;
+			       	if(driftOn == 1) fileout << "\t" << RxB_vec[1]/RxB_vec_norm*drift1st << "\t" << RxB_vec[2]/RxB_vec_norm*drift1st << "\t" << RxB_vec[3]/RxB_vec_norm*drift1st; 
 				fileout  << "\n";
 			       	break;
 			}
@@ -230,20 +232,22 @@ void b_line_real(bool NoMoSOn,double R_1,double alpha,  double start_posZ,bool o
 					// for 1st ORDER, we dont actually need R, but only the angle between the 2 perpend. vectors
 					angle = acos( n[1]*n_old[1] + n[2]*n_old[2] + n[3]*n_old[3] );
                     
-		                        // now calc the NON normed RxB vector for the drift distance with normed R vector (-n_old) and B not normed -> additional 1/B in drift1st
+		                        // now calc the NON normed RxB vector for the drift distance with normed R vector (-n_old) and B not normed
 		                        // minus because n_old points towards center, R away from center
 		                        RxB_vec[1] = -(n_old[2]*B_old[3] - n_old[3]*B_old[2]);
 		                        RxB_vec[2] = -(n_old[3]*B_old[1] - n_old[1]*B_old[3]);
 		                        RxB_vec[3] = -(n_old[1]*B_old[2] - n_old[2]*B_old[1]);
+					RxB_vec_norm = sqrt( RxB_vec[1]*RxB_vec[1] + RxB_vec[2]*RxB_vec[2] + RxB_vec[3]*RxB_vec[3] ); 
+					//cout << "BLINEBUG: Diff of RxB vec vs b_old = " << abs(RxB_vec_norm - b_old) << "\n";
 
-					drift1st = (double)driftdir*momentum*1000./c/b_old/b_old *angle  * ffactor(localtheta(thetaEm, startB, b_old));
+					drift1st = (double)driftdir*momentum*1000./c/b_old *angle  * ffactor(localtheta(thetaEm, startB, b_old));
 					//cout << "BLINEBUG P_old[3] = " << P_old[3] << endl;
 					//cout << "BLine-BUG: Drift1st = " << drift1st << endl;
 	
 					// this is now point B'
-					P[1] += RxB_vec[1]*drift1st;
-					P[2] += RxB_vec[2]*drift1st;
-		                        P[3] += RxB_vec[3]*drift1st;
+					P[1] += RxB_vec[1]/RxB_vec_norm*drift1st;
+					P[2] += RxB_vec[2]/RxB_vec_norm*drift1st;
+		                        P[3] += RxB_vec[3]/RxB_vec_norm*drift1st;
 				
 					
 					// 2nd Order needs R at point A and B' 

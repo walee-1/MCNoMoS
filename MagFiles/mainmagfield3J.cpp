@@ -76,6 +76,12 @@ int main(int argc,char** argv, char* envp[] )
 	double ApertX = myconfig.pDouble("ApertX");
 	double ApertY = myconfig.pDouble("ApertY");
 	double detpos = myconfig.pDouble("detpos");
+	double PMIN = myconfig.pDouble("PMIN");
+	double PMAX = myconfig.pDouble("PMAX");
+	double PSTEP = myconfig.pDouble("PSTEP");
+	double thetamin = myconfig.pDouble("thetamin");
+	double thetamax = myconfig.pDouble("thetamax");
+	double thetastep = myconfig.pDouble("thetastep");
 	
 	bool Perc_on = myconfig.pBool("PercOn");
 	double perc_global_scale = myconfig.pDouble("perc_global_scale");
@@ -362,13 +368,13 @@ int main(int argc,char** argv, char* envp[] )
 	double t_coil_helm1 = SL_thick*helm1_b +(helm1_b -1)*raisin;
 	double helm1CurrDens = RxBCurrent*helm1_l*helm1_b/(l_coil_helm1 * t_coil_helm1); 
 
-	
+	// this changed the conductor parameters for the connector, now commented out
 	// if we use Super conductor, the following coils use normal conductor sizes still
-	if( Conductor == "TTSL" || Conductor == "HTSL" ){
+	/*if( Conductor == "TTSL" || Conductor == "HTSL" ){
 		SL_length = conduct_s;
 		SL_thick = conduct_s;
 		raisin = Raisin;
-	}
+	}*/
 
 	double l_coil_helm2 = SL_length*helm2_l +(helm2_l -1)*raisin;
 	double t_coil_helm2 = SL_thick*helm2_b +(helm2_b -1)*raisin;
@@ -591,9 +597,9 @@ int main(int argc,char** argv, char* envp[] )
 
 	}
 
-
+	// old power calc for SC normal conducting connector
 	// in case of SC, we check the power of the NC coils
-	if( Conductor == "TTSL" ){
+	/*if( Conductor == "TTSL" ){
 		double copper_edge_radius = 0.00045; //edge radius in meter
 		double edge_area = copper_edge_radius*copper_edge_radius*(4. - M_PI);
 		double copper_area = conduct_s*conduct_s - water_dia*water_dia/4*M_PI - edge_area;
@@ -609,7 +615,7 @@ int main(int argc,char** argv, char* envp[] )
 		}
 
 		cout << "MAG: Power Consumption of NC coils is: " << NC_power << " Watts" << endl;
-	}
+	}*/
 
 
 
@@ -886,9 +892,23 @@ int main(int argc,char** argv, char* envp[] )
 	}
 
 	if(blinebool){
-		b_line_real(NoMoSOn,R_1,alpha,blineStartZ,onlyCornerCenter,horilines,vertilines,ApertX,ApertY,apertYshift,apertXshift,inputcoil_RxB,filedir,0,-1,1187.29,2,detpos); //..,..,Z,horil,vertil,apertx,aperty,..,..,prep,driftdir,mom,driftOn, detposZ
-		b_line_real(NoMoSOn,R_1,alpha,blineStartZ,onlyCornerCenter,horilines,vertilines,ApertX,ApertY,apertYshift,apertXshift,inputcoil_RxB,filedir,0,-1,1187.29,1,detpos); //..,..,Z,horil,vertil,apertx,aperty,..,..,prep,driftdir,momentum keV,driftOn, detposZ
-		b_line_real(NoMoSOn,R_1,alpha,blineStartZ,onlyCornerCenter,horilines,vertilines,ApertX,ApertY,apertYshift,apertXshift,inputcoil_RxB,filedir,0,-1,1187.29,0,detpos); //..,..,Z,horil,vertil,apertx,aperty,..,..,prep,driftdir,mom,driftOn, detposZ
+
+		int thetasteps = (int)((thetamax - thetamin)/thetastep) + 1;
+		int psteps = (int)((PMAX - PMIN)/PSTEP) + 1;
+		// we start a loop over theta and p for more investigation possibilities
+		for( int thetai=0; thetai < thetasteps; thetai ++){ 
+			cout << "BLINE: TH = " << thetamin + thetai*thetastep << "\n";
+			for( int pi=0; pi < psteps; pi ++){
+				cout << "BLINE: P = " << PMIN + pi*PSTEP << "\n";
+				// 2nd order drift is turned off for now
+				//b_line_real(NoMoSOn,R_1,alpha,blineStartZ,onlyCornerCenter,horilines,vertilines,ApertX,ApertY,apertYshift,apertXshift,inputcoil_RxB,filedir,0,-1,1187.29,2,detpos); 
+				b_line_real(NoMoSOn,R_1,alpha,blineStartZ,onlyCornerCenter,horilines,vertilines,ApertX,ApertY,apertYshift,apertXshift,inputcoil_RxB,filedir,0,-1,PMIN+pi*PSTEP,thetamin + thetai*thetastep,1,detpos); 
+
+			}
+		}
+		// of course, the loop is not required for the Doff
+		b_line_real(NoMoSOn,R_1,alpha,blineStartZ,onlyCornerCenter,horilines,vertilines,ApertX,ApertY,apertYshift,apertXshift,inputcoil_RxB,filedir,0,-1,PMAX,thetamax,0,detpos); 
+
 	}
 	
 
