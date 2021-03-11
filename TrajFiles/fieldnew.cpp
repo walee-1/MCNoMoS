@@ -91,7 +91,7 @@ void elfield(double z,double r,double *Phi,double *Ez,double *Er)
   static double z0[Nspmax+1],rocen[Nspmax+1],Phin[Nspmax+1][nmax+1];
   static double c1[nmax+1],c2[nmax+1],c3[nmax+1],c4[nmax+1];
   static int Nsp,klast;
-  static int iff=0;
+  static int iff=0; //Set this to something else to stop import
   double ro,u,delz,s,rcmin;
   double P[nmax+1],Pp[nmax+1],rc,rcn;
   int iPhi,iEz,iEr;

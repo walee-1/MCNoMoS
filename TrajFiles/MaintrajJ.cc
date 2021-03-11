@@ -730,6 +730,8 @@ int main(int argc, char ** argv, char* envp[])
         if( PCName == "Daniel" ) SpectraDir = "/home/dmoser/FerencSource+Spectra/Spectra1e7/";
 	else if( PCName == "Waleed" ) SpectraDir = "C:/Users/Waleed/Desktop/MC/FerencSource+Spectra/Spectra1e7";
 	else if( PCName == "Gertrud" ) SpectraDir = "C:/Users/smi/Desktop/MC/FerencSource+Spectra/Spectra1e7";
+	else if ( PCName == "Laptop" ) SpectraDir = "C:/Users/walee/Desktop/MC/FerencSource+Spectra/Spectra1e7";
+	else if ( PCName == "Linux" ) SpectraDir = "/home/waleed/FerencSource+Spectra/Spectra1e7/";
         
 	
 	string SpectraNr;
