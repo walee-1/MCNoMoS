@@ -5,3 +5,5 @@ TrajFiles/.vs
 *.sln
 *.vcxproj*
 *.o
+*.json
+*.pdf
