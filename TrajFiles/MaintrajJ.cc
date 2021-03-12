@@ -26,7 +26,6 @@ using namespace std;
 
 #include "Traj.cc"
 
-
 ////////////////////////////////////////////////////////
 
 int main(int argc, char ** argv, char* envp[])

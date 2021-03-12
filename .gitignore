@@ -1,5 +1,7 @@
+bin/
 .vs/
 .vscode/
 TrajFiles/.vs
 *.sln
 *.vcxproj*
+*.o

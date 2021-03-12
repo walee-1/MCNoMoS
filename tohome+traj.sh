@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-MYPATH="/home/dmoser/MagSimResults/"
-CONFIGPATH="/home/dmoser/Dropbox/PhD/Magfield/MagfieldDaniel/"
+MYPATH="/home/waleed/MagSimResults/"
+CONFIGPATH="/home/waleed/Documents/TrackingCode/Magfield-Traj"
 if [ $1 == '' ] 
 	then 
 		echo "BASH: Give Folder Name!"
