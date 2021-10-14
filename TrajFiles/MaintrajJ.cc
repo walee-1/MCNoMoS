@@ -66,6 +66,7 @@ int main(int argc, char ** argv, char* envp[])
 	commonelectrontraj.G4Compare = myconfig.pBool("G4Compare");
 	commonelectrontraj.Envelope = myconfig.pBool("Envelope");
 	commonelectrontraj.ClusterMC = myconfig.pBool("ClusterMC");
+	commonelectrontraj.ClusterBackMC = myconfig.pBool("ClusterBackMC");
 	string particle = myconfig.pString("particle");
 	N = myconfig.pInt("ParticleN");
 	double apertYshift = myconfig.pDouble("apertYshift");
@@ -157,8 +158,8 @@ int main(int argc, char ** argv, char* envp[])
 		MASS=9.1093836e-31;      // electron mass (in SI) [kg]
 	}
 	else{
-		CHARGE=1.6021766e-19;   // electron charge (in SI, with sign) [C]
-		MASS=1.672621e-27;      // electron mass (in SI) [kg]
+		CHARGE=1.6021766e-19;   // proton charge (in SI, with sign) [C]
+		MASS=1.672621e-27;      // proton mass (in SI) [kg]
 	}
 
 
@@ -325,7 +326,7 @@ int main(int argc, char ** argv, char* envp[])
 
 						//cout << "TRAJBUG: startP roughly = " << commonelectrontraj.Xstart << "\t" << commonelectrontraj.Ystart << "\t" << commonelectrontraj.Zstart << endl;
 						//last argument is offset of Ystart, so that in filename, gyraR can again be subtracted!	
-						trajelectronN(conclusionfilename,N,StartgyraR,OutStream[line]); 
+						trajelectronN(conclusionfilename,N,StartgyraR,OutStream[line]); //main tracking function
 					}
 				}
 			}
@@ -381,6 +382,7 @@ int main(int argc, char ** argv, char* envp[])
         if( PCName == "Daniel" ) SpectraDir = "/home/dmoser/FerencSource+Spectra/Spectra1e7/";
 	else if( PCName == "Waleed" ) SpectraDir = "C:/Users/Waleed/Desktop/MC/FerencSource+Spectra/Spectra1e7";
 	else if( PCName == "Gertrud" ) SpectraDir = "C:/Users/smi/Desktop/MC/FerencSource+Spectra/Spectra1e7";
+	else if ( PCName == "WaleedLinux" ) SpectraDir = "/home/waleed/FourTb/MC_TrajProton/Spectra1e7";
 
         string SpectraNr;
       
@@ -900,7 +902,7 @@ int main(int argc, char ** argv, char* envp[])
 	MonteCarloOut << "TZ2EndGCX" << "\t" << "TZ2EndGCY" << "\t" << "TZ2EndGCZ" << "\t";
 */      
 	MonteCarloOut << "BRxB" << "\t";
-	MonteCarloOut << "xDet" << "\t" << "yDet" << "\t" << "zDet" << "\t" << "DetPhase" << "\t" << "DetB" << "\t" << "ThetaDet" << endl;
+	MonteCarloOut << "xDet" << "\t" << "yDet" << "\t" << "zDet" << "\t" << "DetPhase" << "\t" << "DetB" << "\t" << "ThetaDet" << endl; //relative to the z axis
 	
 
 	//before we go in loop, we calc Bfield at DV and Aperture to define starting window
@@ -921,7 +923,7 @@ int main(int argc, char ** argv, char* envp[])
 	n[3] = B_DV[3]/B_DV_abs;
 
 	if( commonelectrontraj.PercOn ) thetamax_rad = 30/180.*M_PI;
-	else thetamax_rad = 45/180.*M_PI;
+	else thetamax_rad = 45/180.*M_PI; //angle the particle has at the beginning for gyration radius calculation
 	// now we calc the range of values that are allowed in X and Y
 	// first, scale the aperture window to DV
 	DVwindow_X = ApertX * sqrt_r_A;
@@ -930,14 +932,19 @@ int main(int argc, char ** argv, char* envp[])
 	DVwindow_shiftY = apertYshift * sqrt_r_A;
 
 	//calc max gyration radius from 45° and maximum energy
-	velocity(n,781585.,cos(thetamax_rad),0.,velo); 
- 	v=sqrt(velo[1]*velo[1]+velo[2]*velo[2]+velo[3]*velo[3]);
+	if ( particle == "e" ){
+		velocity(n,781585.,cos(thetamax_rad),0.,velo); 
+	}
+	else {
+		velocity(n,751.192,cos(thetamax_rad),0.,velo);
+	}
+	v=sqrt(velo[1]*velo[1]+velo[2]*velo[2]+velo[3]*velo[3]);
 	V_perpend =sin(thetamax_rad)*v;
-        gam=1./sqrt(1.-pow(v/c,2.));     // gamma factor:
+    gam=1./sqrt(1.-pow(v/c,2.));     // gamma factor:
 	double StartgyraRMax = gam * MASS * V_perpend/ 1.602177e-19 / B_DV_abs;
-
+//buffer1 is the proton energy, swotch it around with the Ekin in the while condition (*already done*)
 	counter = 0;
-	while ( MonteCarloData >> commonelectrontraj.thetaStartmax >> commonelectrontraj.Startphi >> commonelectrontraj.Ekin >> buffer1 ){
+	while ( MonteCarloData >> commonelectrontraj.thetaStartmax >> commonelectrontraj.Startphi >> buffer1 >> commonelectrontraj.Ekin ){
 	    //cout << endl << "TRAJ: Decay#: " << counter << endl;	    
 	    counter ++;
 	

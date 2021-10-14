@@ -51,7 +51,8 @@ void elfieldtraj(double *x,double *E,double *Phi)
 //
   z=x[3];
   r=sqrt(x[1]*x[1]+x[2]*x[2]);
-//
+  //
+  //comment all the following out and call an interpolation of your map
   if(facE<1.e-10)
   {
     E[1]=E[2]=E[3]=*Phi=0.;

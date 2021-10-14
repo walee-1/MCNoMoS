@@ -153,6 +153,8 @@ bool Config::pBool(string name) {
 	     (val == "YES") ||
 		 (val == "true") ||
 	     (val == "True") ||
+		 (val == "t") ||
+		 (val == "T") ||
 	     (val == "TRUE"))
 	{
 		return true;

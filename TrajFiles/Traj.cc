@@ -71,6 +71,7 @@ struct typeelectrontraj{
 	bool G4Compare;
 	bool Envelope;
 	bool ClusterMC;
+	bool ClusterBackMC;
     // simulation settings:
         int numstepmax;         // maximum number of Runge-Kutta steps
         double Timemax;         // Maximal time [s]
@@ -438,7 +439,7 @@ void trajelectron1(double *x, double *v, int& electronindex){
 	const double c=299792458.;  // velocity of light in SI units
 	int istep, i;               // loop counter (Runge-Kutta, coordinates)
 	double Phi,B[4],b,btheta;   // Electro-magnetic parameters
-	double gam,p[4],costheta,theta;  // Particle parameters (absolute velocity[m/s],[m²/s²],...)
+	double gam,p[4],costheta,theta;  // Particle parameters (absolute velocity[m/s],[mï¿½/sï¿½],...)
 	double err,energy0;         // Energy error calculation
 	char filename[20];
 	double z,r,rmax,pathlength,Ef0[4],Phi0;
@@ -598,7 +599,7 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		// Detector break (includes PERConly, detector set differently, without y restriction)
 		if(commonelectrontraj.NoMoSOn == true){
 			// Nomos detector break
-			// we distinguish between 180, 90 ° and inbetween
+			// we distinguish between 180, 90 ï¿½ and inbetween
 			if(commonelectrontraj.alpha == 180.){
 				if(x[3] <= commonelectrontraj.zdetector && x[2] < 0.){
 					electronindex=5;        // particle reached the detector
@@ -746,12 +747,12 @@ void trajelectron1(double *x, double *v, int& electronindex){
 			/////////////////////////////////////
 			// evaluates mean BRxB value by summing up all steps and devide by steps
 			// for now, in geometrically defined RxB region
-			// to make it easier, we go in bulks of 90°
+			// to make it easier, we go in bulks of 90ï¿½
 			if( x[3] >= 0. && x[2] >=0. ){
 				commonelectrontraj.b_RxB += b;
 				commonelectrontraj.RxBCounter += 1;
 			}
-			// after the first 90°, we now check if RxB alpha is 180°, if so, consider second quadrant
+			// after the first 90ï¿½, we now check if RxB alpha is 180ï¿½, if so, consider second quadrant
 			if( x[2] < 0. && x[3] > 0. && commonelectrontraj.alpha == 180. ){
 				commonelectrontraj.b_RxB += b;
 				commonelectrontraj.RxBCounter += 1;
