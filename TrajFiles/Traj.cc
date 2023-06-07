@@ -4,6 +4,7 @@ void trajelectron1(double *x,double *v,int& electronindex);
 void velocity(double *n,double kin_energy,double costheta,double phi,double *v);
 void electronstart(double z,double r,double costheta,double phidir,double Ekin,double *x,double *v);
 void electrongeneration(double *x,double *v, double phidir);
+void electrongenerationPoint(double *x,double *v, double phidir);
 void subrn(double *u,int len);
 double randomnumber();
 double PhaseAngleFunc(double *v, double *B, int charge);
@@ -72,6 +73,8 @@ struct typeelectrontraj{
 	bool Envelope;
 	bool ClusterMC;
 	bool ClusterBackMC;
+	bool ClusterBackDetMC;
+	string Conductor;
     // simulation settings:
         int numstepmax;         // maximum number of Runge-Kutta steps
         double Timemax;         // Maximal time [s]
@@ -82,6 +85,7 @@ struct typeelectrontraj{
   double sizedetector;  // size of the detector in x and y directions
   int step;
   int typeenergy;
+  int counter;
   double dstart;
   double pathlength;
   double zstart,rstart,thetastart,excess_energy,Elongstart,Etransstart;
@@ -292,11 +296,130 @@ void trajelectronN(string conclusionfilename, int N,double StartgyraR, ofstream&
 		double V=sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3]);
 		double vpara = v[2]*-sin(commonelectrontraj.alpha/180.*M_PI) + v[3]*cos(commonelectrontraj.alpha/180.*M_PI);
 		double thetaend = acos(vpara/V);
-		OutStream << "\t" << thetaend/M_PI*180. << endl;
-
+		OutStream << "\t" << thetaend/M_PI*180.<<"\t";
+		OutStream << commonelectrontraj.counter<<endl;
 	}
 
+//////////////////////////////////////////
+	// Cluster MONTE CARLO BACK
+	// ///////////////////////////////
+	if( commonelectrontraj.ClusterBackMC ){
 
+		// Electron generator:
+		electrongeneration(x,v,commonelectrontraj.Startphi);            // sets initial condition for x and v, also phi setable
+		
+		commonelectrontraj.Startb = sqrt(commonelectrontraj.StartB[1]*commonelectrontraj.StartB[1] +commonelectrontraj.StartB[2]*commonelectrontraj.StartB[2] +commonelectrontraj.StartB[3]*commonelectrontraj.StartB[3]);
+		commonelectrontraj.StartPhase = commonelectrontraj.Startphi+M_PI;// investigating velocity(), we see that phi of v is just a phase offset to phase of starting position	
+		// StartB is written in electronstart, to be used as cross check to PhaseAngleFunc with Bfield vector
+		commonelectrontraj.StartPhase2 = PhaseAngleFunc(v, commonelectrontraj.StartB, -1);	
+
+		// Trajectory calculation:
+		trajelectron1(x,v,electronindex);
+
+		// we write out StartP, Ekin, StartPhase (2 methods), BDV	
+		OutStream << commonelectrontraj.Xstart << "\t"<< commonelectrontraj.Ystart << "\t" << commonelectrontraj.Zstart << "\t";
+	        OutStream << commontrajexact.Ekin << "\t" << commonelectrontraj.thetaStartmax << "\t";
+	        OutStream << commonelectrontraj.StartPhase << "\t" << commonelectrontraj.StartPhase2 << "\t" << commonelectrontraj.Startb << "\t";
+
+		//
+		// we write away Filter point and B_F
+		OutStream << commonelectrontraj.b_Max_X[1] << "\t" << commonelectrontraj.b_Max_X[2] << "\t" << commonelectrontraj.b_Max_X[3] << "\t";
+		OutStream << commonelectrontraj.b_Max << "\t";
+
+
+		// we write away ApertPoint, Apert Phase, B_A
+		OutStream << commonelectrontraj.ApertGridX << "\t"<< commonelectrontraj.ApertGridY << "\t" << commonelectrontraj.ApertGridZ << "\t";
+		OutStream << commonelectrontraj.ApertPhase << "\t" << commonelectrontraj.Apertb << "\t";
+
+
+		// following are the transition zone parameters, commented out now
+/*
+		//we write away transition zone 1 data: Start GC, EndGC
+		OutStream << commonelectrontraj.TransitionZone1StartGC[1] << "\t" << commonelectrontraj.TransitionZone1StartGC[2] << "\t" << commonelectrontraj.TransitionZone1StartGC[3] << "\t";
+		OutStream << commonelectrontraj.TransitionZone1EndGC[1] << "\t" << commonelectrontraj.TransitionZone1EndGC[2] << "\t" << commonelectrontraj.TransitionZone1EndGC[3] << "\t";
+
+		//we write away transition zone 2 data: Start GC, EndGC
+		OutStream << commonelectrontraj.TransitionZone2StartGC[1] << "\t" << commonelectrontraj.TransitionZone2StartGC[2] << "\t" << commonelectrontraj.TransitionZone2StartGC[3] << "\t";
+		OutStream << commonelectrontraj.TransitionZone2EndGC[1] << "\t" << commonelectrontraj.TransitionZone2EndGC[2] << "\t" << commonelectrontraj.TransitionZone2EndGC[3] << "\t";
+*/		
+		// write out mean BRxB
+		OutStream << commonelectrontraj.b_RxB/(double)commonelectrontraj.RxBCounter << "\t";
+
+		//reuse Startb for norm at Detector
+		commonelectrontraj.Startb = sqrt(pow(commonelectrontraj.DetB[1],2) + pow(commonelectrontraj.DetB[2],2) + pow(commonelectrontraj.DetB[3],2));
+		//we write away detector data: DetPoint, DetPhase, B_Det
+		OutStream << x[1] << "\t" << x[2] << "\t" << x[3] << "\t";
+		OutStream << PhaseAngleFunc(v, commonelectrontraj.DetB, -1) << "\t" << commonelectrontraj.Startb;
+
+		//we don't know theta out here, so we calc it from v and the reference vector (theta relative to detector)
+		double V=sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3]);
+		double vpara = v[2]*-sin(commonelectrontraj.alpha/180.*M_PI) + v[3]*cos(commonelectrontraj.alpha/180.*M_PI);
+		double thetaend = acos(vpara/V);
+		OutStream << "\t" << thetaend/M_PI*180. << "\t";
+		//made changes here
+		OutStream<<commonelectrontraj.counter<<endl;
+		
+	}
+
+		if( commonelectrontraj.ClusterBackDetMC ){
+
+		// Electron generator:
+		electrongeneration(x,v,commonelectrontraj.Startphi);            // sets initial condition for x and v, also phi setable
+		
+		commonelectrontraj.Startb = sqrt(commonelectrontraj.StartB[1]*commonelectrontraj.StartB[1] +commonelectrontraj.StartB[2]*commonelectrontraj.StartB[2] +commonelectrontraj.StartB[3]*commonelectrontraj.StartB[3]);
+		commonelectrontraj.StartPhase = commonelectrontraj.Startphi+M_PI;// investigating velocity(), we see that phi of v is just a phase offset to phase of starting position	
+		// StartB is written in electronstart, to be used as cross check to PhaseAngleFunc with Bfield vector
+		commonelectrontraj.StartPhase2 = PhaseAngleFunc(v, commonelectrontraj.StartB, -1);	
+
+		// Trajectory calculation:
+		trajelectron1(x,v,electronindex);
+
+		// we write out StartP, Ekin, StartPhase (2 methods), BDV	
+		OutStream << commonelectrontraj.Xstart << "\t"<< commonelectrontraj.Ystart << "\t" << commonelectrontraj.Zstart << "\t";
+	        OutStream << commontrajexact.Ekin << "\t" << commonelectrontraj.thetaStartmax << "\t";
+	        OutStream << commonelectrontraj.StartPhase << "\t" << commonelectrontraj.StartPhase2 << "\t" << commonelectrontraj.Startb << "\t";
+
+		//
+		// we write away Filter point and B_F
+		OutStream << commonelectrontraj.b_Max_X[1] << "\t" << commonelectrontraj.b_Max_X[2] << "\t" << commonelectrontraj.b_Max_X[3] << "\t";
+		OutStream << commonelectrontraj.b_Max << "\t";
+
+
+		// we write away ApertPoint, Apert Phase, B_A
+		OutStream << commonelectrontraj.ApertGridX << "\t"<< commonelectrontraj.ApertGridY << "\t" << commonelectrontraj.ApertGridZ << "\t";
+		OutStream << commonelectrontraj.ApertPhase << "\t" << commonelectrontraj.Apertb << "\t";
+
+
+		// following are the transition zone parameters, commented out now
+/*
+		//we write away transition zone 1 data: Start GC, EndGC
+		OutStream << commonelectrontraj.TransitionZone1StartGC[1] << "\t" << commonelectrontraj.TransitionZone1StartGC[2] << "\t" << commonelectrontraj.TransitionZone1StartGC[3] << "\t";
+		OutStream << commonelectrontraj.TransitionZone1EndGC[1] << "\t" << commonelectrontraj.TransitionZone1EndGC[2] << "\t" << commonelectrontraj.TransitionZone1EndGC[3] << "\t";
+
+		//we write away transition zone 2 data: Start GC, EndGC
+		OutStream << commonelectrontraj.TransitionZone2StartGC[1] << "\t" << commonelectrontraj.TransitionZone2StartGC[2] << "\t" << commonelectrontraj.TransitionZone2StartGC[3] << "\t";
+		OutStream << commonelectrontraj.TransitionZone2EndGC[1] << "\t" << commonelectrontraj.TransitionZone2EndGC[2] << "\t" << commonelectrontraj.TransitionZone2EndGC[3] << "\t";
+*/		
+		// write out mean BRxB
+		OutStream << commonelectrontraj.b_RxB/(double)commonelectrontraj.RxBCounter << "\t";
+
+		//reuse Startb for norm at Detector
+		commonelectrontraj.Startb = sqrt(pow(commonelectrontraj.DetB[1],2) + pow(commonelectrontraj.DetB[2],2) + pow(commonelectrontraj.DetB[3],2));
+		//we write away detector data: DetPoint, DetPhase, B_Det
+		OutStream << x[1] << "\t" << x[2] << "\t" << x[3] << "\t";
+		OutStream << PhaseAngleFunc(v, commonelectrontraj.DetB, -1) << "\t" << commonelectrontraj.Startb;
+
+		//we don't know theta out here, so we calc it from v and the reference vector (theta relative to detector)
+		double V=sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3]);
+		//to comment out later
+		//cout<<"Velocity is: "<<v[1]/V<<" "<<v[2]/V<<" "<<v[3]/V<<endl;
+		double vpara = v[2]*-sin(commonelectrontraj.alpha/180.*M_PI) + v[3]*cos(commonelectrontraj.alpha/180.*M_PI);
+		double thetaend = acos(vpara/V);
+		OutStream << "\t" << thetaend/M_PI*180. << "\t";
+		//made changes here
+		OutStream<<commonelectrontraj.counter<<endl;
+		
+	}
 
 
 
@@ -583,7 +706,7 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		} 
 		
 		// particle was reflected
-		if( x[3] <  commonelectrontraj.Zstart - 0.1 && x[2] > 0. ){
+		if( x[3] <  commonelectrontraj.Zstart - 0.1 && x[2] > 0. && commonelectrontraj.ClusterBackDetMC == false ){
 		   	cout << "Z Zstart BREAK" << endl;
 			electronindex=3;        // particle left the
 			break;
@@ -596,8 +719,138 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		//	break;                  // stop trajacking
 		//}
 		
+		if(commonelectrontraj.NoMoSOn == true && commonelectrontraj.ClusterBackMC == true){
+			// Nomos detector break
+			// we distinguish between 180, 90 � and inbetween
+			if(commonelectrontraj.alpha == 180.){
+				if(x[3]<=commonelectrontraj.zdetector  && x[2] < 0.){
+					electronindex=5;        // particle reached the detector
+					cout << "NOMOS det reached 180" << endl;
+					commonelectrontraj.DetB[1] = B[1];
+					commonelectrontraj.DetB[2] = B[2];
+					commonelectrontraj.DetB[3] = B[3];
+					break;                  // stop trajacking
+				}
+				else if (x[3]<=-1.6 && x[2] > 0.){
+					electronindex=5;        // particle reached the detector
+					cout << "Went to BackDet" << endl;
+					commonelectrontraj.DetB[1] = B[1];
+					commonelectrontraj.DetB[2] = B[2];
+					commonelectrontraj.DetB[3] = B[3];
+					break;      
+				}
+			}
+			else if(commonelectrontraj.alpha == 90.){
+				if( x[2] <= commonelectrontraj.zdetector){
+					electronindex=5;        // particle reached the detector
+					cout << "NOMOS det reached 90" << endl;
+					commonelectrontraj.DetB[1] = B[1];
+					commonelectrontraj.DetB[2] = B[2];
+					commonelectrontraj.DetB[3] = B[3];
+					break;                  // stop trajacking
+				}
+			}
+			else{
+				if(x[3] <= zdetwAlpha && x[2] <= ydetwAlpha){
+					electronindex=5;        // particle reached the detector
+					cout << "NOMOS det reached ??" << endl;
+					break;                  // stop trajacking
+				}
+			}
+			if(fabs(x[1])>0.1 && commonelectrontraj.Conductor=="TTSL"){
+				cout<<"Particle left the tube"<<endl;
+				electronindex=6;
+				break;
+			}
+			if(fabs(x[1])>0.175 && commonelectrontraj.Conductor!="TTSL"){
+				cout<<"Particle left the tube"<<endl;
+				electronindex=6;
+				break;
+			}
+		}
+		// else{
+		// 	// PERC detector break
+		// 	if( x[3] >  commonelectrontraj.zdetector && x[2] > 0. ){
+		// 		electronindex=5;        // particle reached the detector
+		// 		cout << "x3 and x2 are: "<<x[3]<<" "<<x[2]<<" "<<commonelectrontraj.zdetector<<endl;
+		// 		cout << "PERC det reached" << endl;
+		// 		break;                  // stop trajacking
+		// 	}
+		
+		// }
+		// break if hit the wall in Perc
+		if(x[3] <  -3. && (fabs(x[2] - 1) >  0.5 || fabs(x[1]) > 0.5)){   
+		    	cout << "PERC WALL BREAK" << endl;
+			electronindex=6;        // particle left the
+		    	break;
+		}
+
+		if(commonelectrontraj.NoMoSOn == true && commonelectrontraj.ClusterBackDetMC == true){
+			// Nomos detector break
+			// we distinguish between 180, 90 � and inbetween
+			if(commonelectrontraj.alpha == 180.){
+				if(x[3]<=commonelectrontraj.zdetector  && x[2] > 0.){
+					electronindex=5;        // particle reached the detector
+					cout << "NOMOS back detector reached" << endl;
+					commonelectrontraj.DetB[1] = B[1];
+					commonelectrontraj.DetB[2] = B[2];
+					commonelectrontraj.DetB[3] = B[3];
+					break;                  // stop trajacking
+				}
+				if(x[3]>=-0.45 && x[2]>0.){
+					electronindex=6;        // particle reached the detector
+					cout << "Particle is in RxB Region" << endl;
+					commonelectrontraj.DetB[1] = B[1];
+					commonelectrontraj.DetB[2] = B[2];
+					commonelectrontraj.DetB[3] = B[3];
+					break;                  // stop trajacking
+				}
+					if(x[3]>=0){
+					electronindex=6;        // particle reached the detector
+					cout << "Particle is in RxB Region Exception Case?" << endl;
+					commonelectrontraj.DetB[1] = B[1];
+					commonelectrontraj.DetB[2] = B[2];
+					commonelectrontraj.DetB[3] = B[3];
+					break;                  // stop trajacking
+				}
+			}
+			else{
+				if(x[3] <= zdetwAlpha && x[2] <= ydetwAlpha){
+					electronindex=5;        // particle reached the detector
+					cout << "NOMOS det reached ??" << endl;
+					break;                  // stop trajacking
+				}
+			}
+			if(fabs(x[1])>0.1 && commonelectrontraj.Conductor=="TTSL"){
+				cout<<"Particle left the tube"<<endl;
+				electronindex=6;
+				break;
+			}
+			if(fabs(x[1])>0.175 && commonelectrontraj.Conductor!="TTSL"){
+				cout<<"Particle left the tube"<<endl;
+				electronindex=6;
+				break;
+			}
+		}
+		// else{
+		// 	// PERC detector break
+		// 	if( x[3] >  commonelectrontraj.zdetector && x[2] > 0. ){
+		// 		electronindex=5;        // particle reached the detector
+		// 		cout << "x3 and x2 are: "<<x[3]<<" "<<x[2]<<" "<<commonelectrontraj.zdetector<<endl;
+		// 		cout << "PERC det reached" << endl;
+		// 		break;                  // stop trajacking
+		// 	}
+		
+		// }
+		// break if hit the wall in Perc
+		if(x[3] <  -3. && (fabs(x[2] - 1) >  0.5 || fabs(x[1]) > 0.5)){   
+		    	cout << "PERC WALL BREAK" << endl;
+			electronindex=6;        // particle left the
+		    	break;
+		}
+
 		// Detector break (includes PERConly, detector set differently, without y restriction)
-		if(commonelectrontraj.NoMoSOn == true){
+		if(commonelectrontraj.NoMoSOn == true && commonelectrontraj.ClusterMC == true){
 			// Nomos detector break
 			// we distinguish between 180, 90 � and inbetween
 			if(commonelectrontraj.alpha == 180.){
@@ -608,6 +861,16 @@ void trajelectron1(double *x, double *v, int& electronindex){
 					commonelectrontraj.DetB[2] = B[2];
 					commonelectrontraj.DetB[3] = B[3];
 					break;                  // stop trajacking
+				}
+				if(fabs(x[1])>0.1 && commonelectrontraj.Conductor=="TTSL"){
+					cout<<"Particle left the tube"<<endl;
+					electronindex=6;
+					break;
+				}
+				if(fabs(x[1])>0.175 && commonelectrontraj.Conductor!="TTSL"){
+					cout<<"Particle left the tube"<<endl;
+					electronindex=6;
+					break;
 				}
 			}
 			else if(commonelectrontraj.alpha == 90.){
@@ -628,14 +891,14 @@ void trajelectron1(double *x, double *v, int& electronindex){
 				}
 			}
 		}
-		else{
-			// PERC detector break
-			if( x[3] >  commonelectrontraj.zdetector ){
+		// else{
+		// 	// PERC detector break
+			if( x[3] >  commonelectrontraj.zdetector && x[2] > 0. &&  commonelectrontraj.ClusterBackMC == false && commonelectrontraj.ClusterBackDetMC==false && commonelectrontraj.PercOn==true){
 				electronindex=5;        // particle reached the detector
 				cout << "PERC det reached" << endl;
 				break;                  // stop trajacking
 			}
-		}
+		
 		
 		// break if hit the wall in Perc
 		if(x[3] <  -3. && (fabs(x[2] - 1) >  0.5 || fabs(x[1]) > 0.5)){   
@@ -644,7 +907,7 @@ void trajelectron1(double *x, double *v, int& electronindex){
 		    	break;
 		}
 		
-
+	
 
 
 		////////////////////////////////////////////////////////////////////////////////////////
@@ -1039,7 +1302,97 @@ void trajelectron1(double *x, double *v, int& electronindex){
 */
 		} // end of if for CLUSTER MC
 
+if( commonelectrontraj.ClusterBackMC ){ 
+			
+			////////////////////////////////////////////
+			// searches for Bfield maximum before aperture so that one can find 
+			if ( ZatApert == 0 ){
+				if( b > commonelectrontraj.b_Max ){
+					commonelectrontraj.b_Max = b;
+					commonelectrontraj.b_Max_X[1] = x[1];
+					commonelectrontraj.b_Max_X[2] = x[2];
+					commonelectrontraj.b_Max_X[3] = x[3];
+				}
 
+			}
+
+
+			/////////////////////////////////////////////
+			//writes away the pos at apert for manual cut later
+			if( x[3] >= -0.3 && ZatApert == 0 ){ 
+				ZatApert = 1;
+				
+				// ApertGridX and Y are reused for MC as the size of the aperture
+				commonelectrontraj.ApertGridX = x[1];
+				commonelectrontraj.ApertGridY = x[2];
+				commonelectrontraj.ApertGridZ = x[3];
+				commonelectrontraj.Apertb = b;
+				commonelectrontraj.ApertPhase = PhaseAngleFunc(v, B, -1);
+			}
+
+
+			/////////////////////////////////////
+			// evaluates mean BRxB value by summing up all steps and devide by steps
+			// for now, in geometrically defined RxB region
+			// to make it easier, we go in bulks of 90�
+			if( x[3] >= 0. && x[2] >=0. ){
+				commonelectrontraj.b_RxB += b;
+				commonelectrontraj.RxBCounter += 1;
+			}
+			// after the first 90�, we now check if RxB alpha is 180�, if so, consider second quadrant
+			if( x[2] < 0. && x[3] > 0. && commonelectrontraj.alpha == 180. ){
+				commonelectrontraj.b_RxB += b;
+				commonelectrontraj.RxBCounter += 1;
+			}
+
+			
+		} // end of if for CLUSTER MC
+
+		if( commonelectrontraj.ClusterBackDetMC ){ 
+			
+			////////////////////////////////////////////
+			// searches for Bfield maximum before aperture so that one can find 
+			if ( ZatApert == 0 ){
+				if( b > commonelectrontraj.b_Max ){
+					commonelectrontraj.b_Max = b;
+					commonelectrontraj.b_Max_X[1] = x[1];
+					commonelectrontraj.b_Max_X[2] = x[2];
+					commonelectrontraj.b_Max_X[3] = x[3];
+				}
+
+			}
+
+
+			/////////////////////////////////////////////
+			//writes away the pos at apert for manual cut later
+			if( x[3] >= -0.3 && ZatApert == 0 ){ 
+				ZatApert = 1;
+				
+				// ApertGridX and Y are reused for MC as the size of the aperture
+				commonelectrontraj.ApertGridX = x[1];
+				commonelectrontraj.ApertGridY = x[2];
+				commonelectrontraj.ApertGridZ = x[3];
+				commonelectrontraj.Apertb = b;
+				commonelectrontraj.ApertPhase = PhaseAngleFunc(v, B, -1);
+			}
+
+
+			/////////////////////////////////////
+			// evaluates mean BRxB value by summing up all steps and devide by steps
+			// for now, in geometrically defined RxB region
+			// to make it easier, we go in bulks of 90�
+			if( x[3] >= 0. && x[2] >=0. ){
+				commonelectrontraj.b_RxB += b;
+				commonelectrontraj.RxBCounter += 1;
+			}
+			// after the first 90�, we now check if RxB alpha is 180�, if so, consider second quadrant
+			if( x[2] < 0. && x[3] > 0. && commonelectrontraj.alpha == 180. ){
+				commonelectrontraj.b_RxB += b;
+				commonelectrontraj.RxBCounter += 1;
+			}
+
+			
+		} // end of if for CLUSTER MC
 
 
 		//	first close point to aperture for G4 compare and Pitch effects
@@ -1223,6 +1576,24 @@ void electrongeneration(double *x,double *v, double phidir){       // generating
     return;         // the particle coordniats x and velocity v are returned
     }
 
+//////////////////////////////////////////////////////////////////////////////////////////
+void electrongenerationPoint(double *x,double *v, double phidir){       // generating particles at the source
+    double PI = 3.1415926;
+    double Start_cord[4],r,Ekin,costheta;
+    // Position of the starting point:
+    Start_cord[1]=commonelectrontraj.Xstart;
+    Start_cord[2]=commonelectrontraj.Ystart;
+    Start_cord[3]=commonelectrontraj.Zstart;
+    // distance on a disk around the starting point (in order to simulat an appertur or beam size)
+    r=commonelectrontraj.Rstartmax;
+    // Direction of the emitted particle:
+   costheta= cos(commonelectrontraj.thetaStartmax);
+    // define particle energy
+    Ekin=commonelectrontraj.Ekin;
+    // calculate the actual start position and velocity vector
+    electronstart(Start_cord,r,costheta,phidir,Ekin,x,v);
+    return;         // the particle coordniats x and velocity v are returned
+    }
 
 /////////////////////////////////////////////
 
